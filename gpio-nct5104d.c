@@ -9,9 +9,10 @@
 MODULE_LICENSE("GPL");
 
 
-#define DRIVER_NAME "gpio-nct5104d"
+#define DRIVER_NAME "nct5104d"
 
 #define NCT5104D_BUS_ADDR               0x2E
+#define NCT5104D_LDEV_SELECT     		0x07	
 #define NCT5104D_SUPERIO_ENABLE	    	0x87	
 #define NCT5104D_SUPERIO_DISABLE		0xAA	
 
@@ -35,6 +36,12 @@ static inline int nct5104d_readb(int base, int reg)
 	return inb(base + 1);
 }
 
+static inline void nct5104d_writeb(int base, int reg, int val)
+{
+	outb(reg, base);
+	outb(val, base + 1);
+}
+
 static inline int nct5104d_enable(int base)
 {
 	if (!request_muxed_region(base, 2, DRVNAME)) {
@@ -50,7 +57,7 @@ static inline int nct5104d_enable(int base)
 
 static inline void nct5104d_select(int base, int ld)
 {
-	outb(#TODO, base);
+	outb(NCT5104D_LDEV_SELECT, base);
 	outb(ld, base + 1);
 }
 
