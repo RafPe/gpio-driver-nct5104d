@@ -9,9 +9,9 @@
 MODULE_LICENSE("GPL");
 
 
-#define DRIVER_NAME "nct5104d"
+#define DRIVER_NAME "gpio-nct5104d"
 
-#define NCT5104D_BUS_ADDR               0x2E
+#define NCT5104D_DEVICE_ADDR            0x2E
 #define NCT5104D_LDEV_SELECT     		0x07	
 #define NCT5104D_SUPERIO_ENABLE	    	0x87	
 #define NCT5104D_SUPERIO_DISABLE		0xAA	
@@ -55,6 +55,8 @@ static inline int nct5104d_enable(int base)
 	return 0;
 }
 
+
+
 static inline void nct5104d_select(int base, int ld)
 {
 	outb(NCT5104D_LDEV_SELECT, base);
@@ -97,6 +99,13 @@ static struct platform_driver sample_pldriver = {
 int ourinitmodule(void)
 {
     printk(KERN_ALERT "\n RAFTECH: Welcome to sample Platform driver.... \n");
+
+   	err = nct5104d_enable( NCT5104D_DEVICE_ADDR );
+	if (err)
+		return err; // #TODO pointer error?
+
+
+
     return 0;
 }
 
