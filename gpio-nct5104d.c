@@ -9,7 +9,7 @@
 MODULE_LICENSE("GPL");
 
 
-#define DRIVER_NAME "gpio-nct5104d"
+#define DRIVER_NAME "x-gpio-nct5104d"
 
 #define NCT5104D_DEVICE_ADDR            0x2E
 #define NCT5104D_LDEV_SELECT     		0x07	
@@ -44,8 +44,8 @@ static inline void nct5104d_writeb(int base, int reg, int val)
 
 static inline int nct5104d_enable(int base)
 {
-	if (!request_muxed_region(base, 2, DRVNAME)) {
-		pr_err(DRVNAME "I/O address 0x%04x already in use\n", base);
+	if (!request_muxed_region(base, 2, DRIVER_NAME)) {
+		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", base);
 		return -EBUSY;
 	}
 
@@ -98,11 +98,26 @@ static struct platform_driver sample_pldriver = {
 
 int ourinitmodule(void)
 {
+	int err;
+	u8 val;
+
     printk(KERN_ALERT "\n RAFTECH: Welcome to sample Platform driver.... \n");
 
    	err = nct5104d_enable( NCT5104D_DEVICE_ADDR );
 	if (err)
 		return err; // #TODO pointer error?
+
+
+	val = nct5104d_readb( NCT5104D_DEVICE_ADDR,0x61);
+	printk(KERN_ALERT "RAFTECH: value before is  0x%04x\n",val);
+
+
+	nct5104d_writeb( NCT5104D_DEVICE_ADDR,0x61,0x67);
+	printk(KERN_ALERT "RAFTECH: wrote to device");
+
+	val = nct5104d_readb( NCT5104D_DEVICE_ADDR,0x61);
+	printk(KERN_ALERT "RAFTECH: value after is  0x%04x\n",val);
+	
 
 
 
