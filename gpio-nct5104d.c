@@ -22,6 +22,25 @@ MODULE_LICENSE("GPL");
 #define NCT5104D_REG_GPIO_INVERSION     ( NCT5104D_REG_BASE_ADDR +3 )
 #define NCT5104D_REG_GPIO_STATUS        ( NCT5104D_REG_BASE_ADDR +4 )
 
+
+/* Power on the device. */
+static void my_device_power_on(struct my_device_platform_data* pdata)
+{
+    printk(KERN_ALERT " %s\n", __FUNCTION__);
+}
+
+/* Power Off the device. */
+static void my_device_power_off(struct my_device_platform_data* pdata)
+{
+    printk(KERN_ALERT " %s\n", __FUNCTION__);
+}
+
+/* Reset the device. */
+static void my_device_reset(struct my_device_platform_data* pdata)
+{
+    printk(KERN_ALERT " %s\n", __FUNCTION__);
+}
+
 /* Data structure for the platform data of ntc chip*/
 struct platform_data_ntc40x {
  int reset_gpio;
@@ -40,6 +59,48 @@ static struct platform_data_ntc40x device_pdata_ntc40x = {
  .reset = my_device_reset
 };
 
+/**************/ 
+static int sample_drv_probe(struct platform_device *pdev){
+}
+static int sample_drv_remove(struct platform_device *pdev){
+}
+
+static struct platform_driver sample_pldriver = {
+    .probe          = sample_drv_probe,
+    .remove         = sample_drv_remove,
+    .driver = {
+            .name  = DRIVER_NAME,
+    },
+};
+
+
+
+/* Specifying my resources information */
+static struct resource sample_resources[] = {
+        {
+                .start          = RESOURCE1_START_ADDRESS,
+                .end            = RESOURCE1_END_ADDRESS,
+                .flags          = IORESOURCE_MEM,
+        },
+        {
+                .start          = RESOURCE2_START_ADDRESS,
+                .end            = RESOURCE2_END_ADDRESS,
+                .flags          = IORESOURCE_MEM,
+        },
+    {
+                .start          = SAMPLE_DEV_IRQNUM,
+                .end            = SAMPLE_DEV_IRQNUM,
+                .flags          = IORESOURCE_IRQ,
+        }
+
+    };    
+
+static struct platform_device sample_device = {
+        .name           = DRIVER_NAME,
+        .id             = -1,
+        .num_resources  = ARRAY_SIZE(sample_resources),
+        .resource       = sample_resources,
+};
 
 
 
@@ -104,19 +165,6 @@ static inline void nct5104d_disable(int base)
 // }
 
 
-/**************/ 
-static int sample_drv_probe(struct platform_device *pdev){
-}
-static int sample_drv_remove(struct platform_device *pdev){
-}
-
-static struct platform_driver sample_pldriver = {
-    .probe          = sample_drv_probe,
-    .remove         = sample_drv_remove,
-    .driver = {
-            .name  = DRIVER_NAME,
-    },
-};
 /**************/  
 
 int ourinitmodule(void)
