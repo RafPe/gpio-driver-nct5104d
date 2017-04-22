@@ -42,16 +42,16 @@ static void my_device_reset(struct my_device_platform_data* pdata)
 }
 
 /* Data structure for the platform data of ntc chip*/
-struct platform_data_ntc40x {
+struct platform_data_ntc5104d {
  int reset_gpio;
  int power_on_gpio;
- void (*power_on)(struct platform_data_ntc40x* ppdata);
- void (*power_off)(struct platform_data_ntc40x* ppdata);
- void (*reset)(struct platform_data_ntc40x* pdata);
+ void (*power_on)(struct platform_data_ntc5104d* ppdata);
+ void (*power_off)(struct platform_data_ntc5104d* ppdata);
+ void (*reset)(struct platform_data_ntc5104d* pdata);
 };
 
-/* "ntc40x device" platform data */
-static struct platform_data_ntc40x device_pdata_ntc40x = {
+/* "ntc5104d device" platform data */
+static struct platform_data_ntc5104d device_pdata_ntc5104d = {
  .reset_gpio = 100,
  .power_on_gpio = 101,
  .power_on = my_device_power_on,
