@@ -12,11 +12,35 @@ MODULE_LICENSE("GPL");
 #define DRIVER_NAME "x-gpio-nct5104d"
 
 #define NCT5104D_DEVICE_ADDR            0x2E
+
 #define NCT5104D_LDEV_SELECT     		0x07	
 #define NCT5104D_SUPERIO_ENABLE	    	0x87	
 #define NCT5104D_SUPERIO_DISABLE		0xAA	
 
 
+/* Data structure for the platform data of ntc chip*/
+struct platform_data_ntc40x {
+ int reset_gpio;
+ int power_on_gpio;
+ void (*power_on)(struct platform_data_ntc40x* ppdata);
+ void (*power_off)(struct platform_data_ntc40x* ppdata);
+ void (*reset)(struct platform_data_ntc40x* pdata);
+};
+
+/* "ntc40x device" platform data */
+static struct platform_data_ntc40x device_pdata_ntc40x = {
+ .reset_gpio = 100,
+ .power_on_gpio = 101,
+ .power_on = my_device_power_on,
+ .power_off = my_device_power_off,
+ .reset = my_device_reset
+};
+
+
+
+
+
+/*--------  CORE functions  --------*/
 
 static int nct5104d_readw(int base, int reg)
 {
@@ -29,19 +53,16 @@ static int nct5104d_readw(int base, int reg)
 
 	return val;
 }
-
 static inline int nct5104d_readb(int base, int reg)
 {
 	outb(reg, base);
 	return inb(base + 1);
 }
-
 static inline void nct5104d_writeb(int base, int reg, int val)
 {
 	outb(reg, base);
 	outb(val, base + 1);
 }
-
 static inline int nct5104d_enable(int base)
 {
 	if (!request_muxed_region(base, 2, DRIVER_NAME)) {
@@ -54,8 +75,6 @@ static inline int nct5104d_enable(int base)
 
 	return 0;
 }
-
-
 
 static inline void nct5104d_select(int base, int ld)
 {
