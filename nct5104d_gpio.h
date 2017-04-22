@@ -10,3 +10,8 @@
 #define NCT5104D_REG_GPIO_DATA          ( NCT5104D_REG_BASE_ADDR +2 )
 #define NCT5104D_REG_GPIO_INVERSION     ( NCT5104D_REG_BASE_ADDR +3 )
 #define NCT5104D_REG_GPIO_STATUS        ( NCT5104D_REG_BASE_ADDR +4 )
+
+struct platform_data_ntc5104d {
+ int chip_addr;
+ int gpio_access_addr;
+};
