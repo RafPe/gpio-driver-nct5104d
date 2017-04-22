@@ -70,6 +70,7 @@ static struct platform_driver sample_pldriver = {
     .remove         = sample_drv_remove,
     .driver = {
             .name  = DRIVER_NAME,
+			.owner = THIS_MODULE,
     },
 };
 
@@ -78,19 +79,19 @@ static struct platform_driver sample_pldriver = {
 /* Specifying my resources information */
 static struct resource sample_resources[] = {
         {
-                .start          = RESOURCE1_START_ADDRESS,
-                .end            = RESOURCE1_END_ADDRESS,
-                .flags          = IORESOURCE_MEM,
+                .start          = 0,
+                .end            = 1,
+                .flags          = 2,
         },
         {
-                .start          = RESOURCE2_START_ADDRESS,
-                .end            = RESOURCE2_END_ADDRESS,
-                .flags          = IORESOURCE_MEM,
+                .start          = 0,
+                .end            = 1,
+                .flags          = 2,
         },
     {
-                .start          = SAMPLE_DEV_IRQNUM,
-                .end            = SAMPLE_DEV_IRQNUM,
-                .flags          = IORESOURCE_IRQ,
+                .start          = 0,
+                .end            = 1,
+                .flags          = 2,
         }
 
     };    
@@ -100,6 +101,7 @@ static struct platform_device sample_device = {
         .id             = -1,
         .num_resources  = ARRAY_SIZE(sample_resources),
         .resource       = sample_resources,
+		.dev.platform_data	= &device_pdata_ntc5104d
 };
 
 
