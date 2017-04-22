@@ -13,5 +13,6 @@
 
 struct platform_data_ntc5104d {
  int chip_addr;
+ int num_gpio;
  int gpio_access_addr;
 };

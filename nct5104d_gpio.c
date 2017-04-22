@@ -9,6 +9,22 @@
 
 MODULE_LICENSE("GPL");
 
+static struct platform_data_ntc5104d device_pdata_ntc5104d = {
+ .chip_addr = NCT5104D_DEVICE_ADDR ,
+ .num_gpio  = 16 ,
+ .gpio_access_addr = NCT5104D_REG_BASE , 
+};
+
+static struct platform_device device_pdevice_ntc5104d = {
+        .name           = DRIVER_NAME,
+        .id             = 0,
+        // .num_resources  = ARRAY_SIZE(sample_resources),
+        // .resource       = sample_resources,
+		.dev            = {
+			.platform_data	= &device_pdata_ntc5104d
+		},
+};
+
 
 /*--------  CORE communication functions  --------*/
 static int nct5104d_readw(int base, int reg)
@@ -64,6 +80,11 @@ static int __init nct5104d_driver_init(void)
 	u8 val;
 
     printk(KERN_ALERT "\n RAFTECH: Welcome to sample Platform driver.... \n");
+
+	retval = platform_device_register(&device_pdevice_ntc5104d);
+	if (retval)
+		return retval; // #TODO pointer error?
+	printk(KERN_ALERT "nct5104d:registered platform device device");
 
    	err = nct5104d_enable( NCT5104D_DEVICE_ADDR );
 	if (err)
