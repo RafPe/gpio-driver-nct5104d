@@ -32,11 +32,13 @@ static struct platform_device device_pdevice_ntc5104d =
 
 static int ntc5104d_drv_probe(struct platform_device *pdev)
 {
-	struct platform_data_ntc5104d *pdata = (platform_data_ntc5104d*)pdev->dev.platform_data ;
+	struct platform_data_ntc5104d *pdata = dev_get_platdata(&pdev->dev);
 
-	printk(KERN_ALERT "%s: platform data - chip addr        : 0x%04x "DRIVER_NAME ,pdata->chip_addr);
-	printk(KERN_ALERT "%s: platform data - num GPIO         : %d  ",DRIVER_NAME ,pdata->num_gpio);
-	printk(KERN_ALERT "%s: platform data - gpio access addr : %d",DRIVER_NAME, pdata->gpio_access_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : %d\n",pdata->chip_addr );
+	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%04x\n"pdata->chip_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%04x\n",pdata->gpio_access_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : %d\n",pdata->gpio_access_addr);
 
 	return 0;
 }
@@ -105,7 +107,7 @@ static inline void nct5104d_disable(int base)
 /*--------  initialization  --------*/
 void __init nct5104d_init_platform_data(void)
 {
-    printk(KERN_ALERT " %s\n", __FUNCTION__);
+    //printk(KERN_ALERT " %s\n", __FUNCTION__);
 
     /* Register "nct5104d platform device" with the OS. */
 	platform_device_register(&device_pdevice_ntc5104d);
@@ -113,15 +115,10 @@ void __init nct5104d_init_platform_data(void)
 
 static int __init nct5104d_driver_init(void)
 {
-	int err,retval;
-	u8 val;
-
-    printk(KERN_ALERT "\n %s: Welcome to sample Platform driver.... \n",DRIVER_NAME);
-
 	nct5104d_init_platform_data();
 	printk(KERN_ALERT "%s: registered platform device device",DRIVER_NAME);
 
-	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe);
+	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe); //TODO check return value
 
    	// err = nct5104d_enable( NCT5104D_DEVICE_ADDR );
 	// if (err)
