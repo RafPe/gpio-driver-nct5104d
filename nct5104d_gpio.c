@@ -4,93 +4,27 @@
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/version.h>
+#include <linux/device.h>         // Header to support the kernel Driver Model
+#include <linux/kernel.h>         // Contains types, macros, functions for the kernel
+#include <linux/fs.h>             // Header for the Linux file system support
+#include <asm/uaccess.h>          // Required for the copy to user function
+#include <linux/delay.h>
 
 #include "nct5104d_gpio.h"
+#include "query_ioctl.h"
 
 #define FIRST_MINOR 0
 #define MINOR_CNT 1
 
-static int gpio_access_addr = NCT5104D_DGA_GSR ;
-static int device_file_major_number = 0;
-static const char device_name[] = "nct5104d_gpio";
- 
+static int 		gpio_access_addr = NCT5104D_DGA_GSR ;
+static int    	majorNumber;                  
+
 static dev_t dev;
-static struct cdev c_dev;
 static struct class *cl;
 
 module_param(gpio_access_addr, int, 0644);
 MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
 
-
-/*--------  Character device  --------*/
-static int nct5104d_cdev_open(struct inode *i, struct file *f)
-{
-    return 0;
-}
-static int nct5104d_cdev_close(struct inode *i, struct file *f)
-{
-    return 0;
-}
-
-static struct file_operations nct5104d_driver_fops = 
-{
-    .owner = THIS_MODULE,
-    .open = nct5104d_cdev_open,
-    .release = nct5104d_cdev_close,
-    .unlocked_ioctl = nct5104d_ioctl,
-};
-
-static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
-{
-    query_arg_t q;
- 
-    switch (cmd)
-    {
-        case QUERY_GET_VARIABLES:
-            q.status = status;
-            q.dignity = dignity;
-            q.ego = ego;
-            if (copy_to_user((query_arg_t *)arg, &q, sizeof(query_arg_t)))
-            {
-                return -EACCES;
-            }
-            break;
-        case QUERY_CLR_VARIABLES:
-            status = 0;
-            dignity = 0;
-            ego = 0;
-            break;
-        case QUERY_SET_VARIABLES:
-            if (copy_from_user(&q, (query_arg_t *)arg, sizeof(query_arg_t)))
-            {
-                return -EACCES;
-            }
-            status = q.status;
-            dignity = q.dignity;
-            ego = q.ego;
-            break;
-        default:
-            return -EINVAL;
-    }
- 
-    return 0;
-}
-
-static int register_device(void)
-{
-        int result = 0;
-
-        result = register_chrdev( 0, device_name, &simple_driver_fops );
-        if( result < 0 )
-        {
-            printk( KERN_WARNING "nct5104d_gpio: Failed to register character device with errorcode = %i", result );
-            return result;
-        }
-        device_file_major_number = result;
-        printk( KERN_NOTICE "nct5104d_gpio: registered character device with major number = %i and minor numbers 0...255"
-             , device_file_major_number );
-        return 0;
-}
 
 
 /*--------  CORE communication functions  --------*/
@@ -153,6 +87,96 @@ static inline void nct5104d_soft_reset(void)
 }
 
 
+/*--------  Character device  --------*/
+static int nct5104d_cdev_open(struct inode *i, struct file *f)
+{
+    return 0;
+}
+static int nct5104d_cdev_close(struct inode *i, struct file *f)
+{
+    return 0;
+}
+
+static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
+{
+    gpio_arg_t q_gpio;
+    nct5104dctl_arg_t q_ctl;
+
+    switch (cmd)
+    {
+        case IOCTL_GET_REG:
+            if (copy_from_user(&q_ctl, (nct5104dctl_arg_t *)arg, sizeof(nct5104dctl_arg_t)))
+            {
+                return -EACCES;
+            }			
+			q_ctl.value = nct5104d_readb(q_ctl.registry);
+
+            if (copy_to_user((nct5104dctl_arg_t *)arg, &q_ctl, sizeof(nct5104dctl_arg_t)))
+            {
+                return -EACCES;
+            }
+            break;
+        // case QUERY_CLR_VARIABLES:
+        //     status = 0;
+        //     dignity = 0;
+        //     ego = 0;
+        //     break;
+        // case QUERY_SET_VARIABLES:
+        //     if (copy_from_user(&q, (query_arg_t *)arg, sizeof(query_arg_t)))
+        //     {
+        //         return -EACCES;
+        //     }
+        //     status = q.status;
+        //     dignity = q.dignity;
+        //     ego = q.ego;
+        //     break;
+        default:
+            return -EINVAL;
+    }
+ 
+    return 0;
+}
+
+static struct file_operations nct5104d_driver_fops = 
+{
+    .owner = THIS_MODULE,
+    .open = nct5104d_cdev_open,
+    .release = nct5104d_cdev_close,
+    .unlocked_ioctl = nct5104d_ioctl,
+};
+
+static int nct5104d_cdev_register(void)
+{
+    struct device *dev_ret;
+ 
+	majorNumber = register_chrdev(0, DRIVER_NAME, &nct5104d_driver_fops);
+	if (majorNumber<0){
+		printk(KERN_ALERT "nct5104d_gpio: Failed to register major number\n");
+		return majorNumber;
+	}
+	printk(KERN_INFO "nct5104d_gpio: Registered correctly with major number %d\n", majorNumber);
+
+    if (IS_ERR(cl = class_create(THIS_MODULE, "nct5104d")))
+    {
+        unregister_chrdev_region(dev, MINOR_CNT);
+		printk(KERN_ALERT "nct5104d_gpio: Failed to register class\n");
+        return PTR_ERR(cl);
+    }
+
+    if (IS_ERR(dev_ret = device_create(cl, NULL, MKDEV(majorNumber, 0), NULL, DRIVER_NAME)))
+    {
+        class_destroy(cl);
+        unregister_chrdev_region(dev, MINOR_CNT);
+		printk(KERN_ALERT "nct5104d_gpio: Failed to create device\n");
+        return PTR_ERR(dev_ret);
+    }
+
+	printk(KERN_ALERT "nct5104d_gpio: Succesfuly registered char device\n");
+
+	return 0;
+
+}
+
 
 /*--------  Platform data/platform and driver  --------*/
 
@@ -200,7 +224,7 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",gpio_access_addr);
 	
 	nct5104d_soft_reset();
-    mdelay(5);
+    mdelay(50);
 
    	res = nct5104d_efm_enable();
 	if (res)
@@ -215,14 +239,14 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 	*/
 	val = 0;
 	val = nct5104d_get_logical_device();
-	printk(KERN_ALERT "nct5104d_gpio: Current selected logical device 0x%04x\n",val);
+	printk(KERN_ALERT "nct5104d_gpio: Currently selected logical device 0x%04x\n",val);
 
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_8);
 	printk(KERN_ALERT "nct5104d_gpio: Switched logical device ... \n");
 
 	val = 0;
 	val = nct5104d_get_logical_device();
-	printk(KERN_ALERT "nct5104d_gpio: Current selected logical device 0x%04x\n",val);
+	printk(KERN_ALERT "nct5104d_gpio: Currently selected logical device 0x%04x\n",val);
 
 	//TODO implement proper address config with 16byte
 	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,gpio_access_addr);
@@ -277,8 +301,16 @@ void __init nct5104d_init_platform_data(void)
 
 static int __init nct5104d_driver_init(void)
 {
+	int res=0;
+
+	printk(KERN_ALERT "nct5104d_gpio: Initialiazing device ... \n");
+
+	res = nct5104d_cdev_register();
+	if (res)
+		return res; 
+
 	nct5104d_init_platform_data();
-	printk(KERN_ALERT "%s: registered platform device",DRIVER_NAME);
+	printk(KERN_ALERT "nct5104d_gpio: Succesfuly registered platform device\n");
 
 	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe);
 
@@ -300,3 +332,4 @@ module_exit(nct5104d_driver_exit);
 MODULE_AUTHOR("RafPe");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Define param gor GPIO access");
+MODULE_VERSION("0.3");
