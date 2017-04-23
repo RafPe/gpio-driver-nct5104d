@@ -24,6 +24,17 @@
 #define NCT5104D_DGA_INVERSION         0x68                   
 #define NCT5104D_DGA_STATUS            0x69                     /* active edge detection */
 
+
+enum nct5104d_gpio_status {
+    nct5104d_GPIO_HIGH,
+    nct5104d_GPIO_LOW
+};
+
+enum nct5104d_gpio_dir {
+    nct5104d_GPIO_IN,
+    nct5104d_GPIO_OUT
+};
+
 struct platform_data_ntc5104d {
  int chip_addr;
  int num_gpio;

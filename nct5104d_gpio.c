@@ -124,6 +124,8 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
                 return -EACCES;
             }			
 
+			if( ( q_ctl.registry > 255) || (q_ctl.registry) < 0) ) return -EINVAL
+
 			q_ctl.value = nct5104d_readb(q_ctl.registry);
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] registry is  => %d\n", q_ctl.registry);
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] value is  => %d\n", q_ctl.value);
