@@ -9,19 +9,22 @@
  
  typedef struct
 {
-    int pin, state, direction;
+    int pin;
+    int state; 
+    int direction;
 } gpio_arg_t;
  
-#define IOCTL_GET_PIN _IOR('q', 1, gpio_arg_t *)
-#define IOCTL_SET_PIN _IOW('q', 2, gpio_arg_t *)
-
 typedef struct
 {
-    int registry, value;
+    int registry;
+    int value;
 } nct5104dctl_arg_t;
 
-#define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
-#define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
+#define IOCTL_CMD_GET_PIN 1
+#define IOCTL_CMD_SET_PIN 2
+
+#define IOCTL_CMD_GET_REG 3
+#define IOCTL_CMD_SET_REG 4
 
 
 enum
@@ -51,7 +54,7 @@ void get_vars(int fd)
         printf("Request - cmd : %zu\n", IOCTL_GET_REG);
         printf("Request registry: %d\n", q.registry);
 
-    if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
+    if (ioctl(fd, IOCTL_CMD_GET_REG, &q) == -1)
     {
         perror("query_apps ioctl get");
     }
@@ -69,31 +72,33 @@ int main(int argc, char *argv[])
 
     q.value=0;
 
-    while ((ch = getopt_long(argc, argv, "t:a:", long_options, NULL)) != -1)
-    {
-        // check to see if a single character or long option came through
-        switch (ch)
-        {
-            case 'a':
-                if (strcmp(optarg, "get") == 0)
-                {
-                    option = e_get;
-                }
-                else
-                {
-                    option = e_set;
-                }
-                break;
-            case 'r':
-                q.registry = atoi(optarg); 
-                break;
-            case 'v':
-                q.value = atoi(optarg);
-                break;
-             default: print_usage();  
-                      return 0;                             
-        }
-    }
+    q.registry = 0x07
+
+    // while ((ch = getopt_long(argc, argv, "t:a:", long_options, NULL)) != -1)
+    // {
+    //     // check to see if a single character or long option came through
+    //     switch (ch)
+    //     {
+    //         case 'a':
+    //             if (strcmp(optarg, "get") == 0)
+    //             {
+    //                 option = e_get;
+    //             }
+    //             else
+    //             {
+    //                 option = e_set;
+    //             }
+    //             break;
+    //         case 'r':
+    //             q.registry = atoi(optarg); 
+    //             break;
+    //         case 'v':
+    //             q.value = atoi(optarg);
+    //             break;
+    //          default: print_usage();  
+    //                   return 0;                             
+    //     }
+    // }
 
 
     fd = open(file_name, O_RDWR);
