@@ -9,6 +9,8 @@
 
 MODULE_LICENSE("GPL");
 
+static void my_device_reset(struct platform_data_ntc5104d* pdata);
+
 
 /*--------  Platform data/platform and driver  --------*/
 
@@ -17,7 +19,15 @@ static struct platform_data_ntc5104d device_pdata_ntc5104d =
  .chip_addr = NCT5104D_DEVICE_ADDR ,
  .num_gpio  = 16 ,
  .gpio_access_addr = NCT5104D_REG_BASE , 
+ .reset = my_device_reset ,
 };
+
+/* Reset the device. */
+static void my_device_reset(struct platform_data_ntc5104d* pdata)
+{
+    printk(KERN_ALERT " %s\n", __FUNCTION__);
+}
+
 
 static struct platform_device device_pdevice_ntc5104d = 
 {
@@ -107,8 +117,6 @@ static inline void nct5104d_disable(int base)
 /*--------  initialization  --------*/
 void __init nct5104d_init_platform_data(void)
 {
-    //printk(KERN_ALERT " %s\n", __FUNCTION__);
-
     /* Register "nct5104d platform device" with the OS. */
 	platform_device_register(&device_pdevice_ntc5104d);
 }
