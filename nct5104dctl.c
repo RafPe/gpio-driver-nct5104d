@@ -57,8 +57,6 @@ void print_usage()
 
 void get_vars(int fd)
 {
-    printf("Request registry: %d\n", q.registry);
-
     if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
     {
         perror("nct5104dctl ioctl get");
@@ -72,9 +70,9 @@ void get_vars(int fd)
  
 int main(int argc, char *argv[])
 {
-    int option = 0;
-    char *file_name = "/dev/nct5104d_gpio";
-    int fd;
+    int fd ,option = 0 ,indexptr = 0;
+    char *endptr, *str, *file_name = "/dev/nct5104d_gpio";
+    long val;
 
     if(argc < 4)
     {
@@ -86,9 +84,10 @@ int main(int argc, char *argv[])
     q.value = 0;
 
 
+    //while ((option = getopt_long(argc, argv, "a:r:v:",long_options, &indexptr)) != -1){
     while ((option = getopt(argc, argv,"a:r:v:")) != -1) {
         switch (option) {
-             case 'a' :         printf("I got [%s] as action param\n",optarg);
+             case 'a' :         
                         if (strcmp(optarg, "get") == 0)
                             {
                                 option = 0;
@@ -100,60 +99,52 @@ int main(int argc, char *argv[])
                                 printf("setup option to be set\n");
                             }
                             break;
-             case 'r' : q.registry = atoi(optarg); 
+             case 'r' : val = strtol(optarg, &endptr, 16); // convert from hex string  i.e. 0x01
+                        if (endptr == optarg) {
+                            q.registry = atoi(optarg); 
+                        }
+                        else
+                        {
+                            q.registry = (int) val; // TODO Check for conversion error!
+                        }
+                         
                  break;
-             case 'v' : q.value = atoi(optarg); 
+             case 'v' : val = strtol(optarg, &endptr, 16); // convert from hex string  i.e. 0x01
+                        if (endptr == optarg) {
+                            q.value = atoi(optarg); 
+                        }
+                        else
+                        {
+                            q.value = (int) val; // TODO Check for conversion error!
+                        }
                  break;
              default: print_usage(); 
                  exit(EXIT_FAILURE);
         }
     }
 
-    if (option == 0) {
-        printf("I would get something for you\n");
-    }
-    else
-    {
-                printf("I would get something for you\n");
-    }
 
-
-    if (q.registry == -1) {
+    if (q.registry < 1) {
         print_usage();
         exit(EXIT_FAILURE);
     }
 
-    printf("Registry : %d\n", q.registry);
-    printf("Value: %d\n", q.value);
+    fd = open(file_name, O_RDWR);
+    if (fd == -1)
+    {
+        perror("nct5104dctl open");
+        return 2;
+    }
 
+    if (option == 0) {
+         get_vars(fd);
+    }
+    else
+    {
+        get_vars(fd);
+    }
 
-    // fd = open(file_name, O_RDWR);
-    // if (fd == -1)
-    // {
-    //     perror("query_apps open");
-    //     return 2;
-    // }
-
-    // if(option == e_get)
-    // {
-    //     get_vars(fd);
-    // }
-    // else
-    // {
-
-    // }
-
-    // close (fd);
+    close (fd);
  
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
