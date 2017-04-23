@@ -49,6 +49,12 @@ typedef struct
 #define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
 #define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
 
+#define IOCTL_CMD_GET_PIN 1
+#define IOCTL_CMD_SET_PIN 2
+
+#define IOCTL_CMD_GET_REG 3
+#define IOCTL_CMD_SET_REG 4
+
 
 enum nct5104d_gpio_status {
     nct5104d_GPIO_HIGH,

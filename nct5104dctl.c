@@ -51,7 +51,7 @@ void print_usage()
 
 void get_vars(int fd)
 {
-        printf("Request - cmd : %zu\n", IOCTL_GET_REG);
+        printf("Request - cmd : %zu\n", IOCTL_CMD_GET_REG);
         printf("Request registry: %d\n", q.registry);
 
     if (ioctl(fd, IOCTL_CMD_GET_REG, &q) == -1)
