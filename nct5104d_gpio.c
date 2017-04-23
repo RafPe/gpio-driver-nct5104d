@@ -9,9 +9,14 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <asm/uaccess.h>          // Required for the copy to user function
 #include <linux/delay.h>
+#include <linux/mutex.h>	         /// Required for the mutex functionality
+
 
 #include "nct5104d_gpio.h"
 #include "query_ioctl.h"
+
+static DEFINE_MUTEX(ebbchar_mutex);
+
 
 #define FIRST_MINOR 0
 #define MINOR_CNT 1
@@ -90,10 +95,17 @@ static inline void nct5104d_soft_reset(void)
 /*--------  Character device  --------*/
 static int nct5104d_cdev_open(struct inode *i, struct file *f)
 {
+	if(!mutex_trylock(&ebbchar_mutex)){    /// Try to acquire the mutex (i.e., put the lock on/down)
+											/// returns 1 if successful and 0 if there is contention
+		printk(KERN_ALERT "nct5104d_gpio: Device in use by another process");
+		return -EBUSY;
+	}
+
     return 0;
 }
 static int nct5104d_cdev_close(struct inode *i, struct file *f)
 {
+	mutex_unlock(&ebbchar_mutex);          /// Releases the mutex (i.e., the lock goes up)
     return 0;
 }
 
@@ -307,8 +319,10 @@ void __init nct5104d_init_platform_data(void)
 static int __init nct5104d_driver_init(void)
 {
 	int res=0;
-
+	
 	printk(KERN_ALERT "nct5104d_gpio: Initialiazing device ... \n");
+
+	mutex_init(&ebbchar_mutex);       /// Initialize the mutex lock dynamically at runtime
 
 	res = nct5104d_cdev_register();
 	if (res)
@@ -326,6 +340,13 @@ static int __init nct5104d_driver_init(void)
 static void __exit nct5104d_driver_exit(void)
 {
 	printk(KERN_ALERT "nct5104d: unregistered platform device");
+
+	device_destroy(cl, MKDEV(majorNumber, 0));     // remove the device
+	class_unregister(cl);                          // unregister the device class
+	class_destroy(cl);                             // remove the device class
+	unregister_chrdev(majorNumber, DRIVER_NAME);             // unregister the major number
+
+	mutex_destroy(&ebbchar_mutex);        /// destroy the dynamically-allocated mutex
     return;
 }
 
