@@ -7,6 +7,7 @@
 #define NCT5104D_REG_GPIO_BASEADDR_L    0x61
 
 #define NCT5104D_LDEVICE_GPIO    		0x07
+#define NCT5104D_LDEVICE_8      		0x08
 
 
 /*--------  extended function mode  --------*/
@@ -17,20 +18,14 @@
 
 /*--------  Direct GPIO Access (DGA)  --------*/
 #define NCT5104D_DGA_GSR               0x65                    /* Select GPIO */
-#define NCT5104D_DGA_IO                ( NCT5104D_DGA_GSR +1 ) /* input or output */
-#define NCT5104D_DGA_DATA              ( NCT5104D_DGA_GSR +2 ) /* set pin state */
-#define NCT5104D_DGA_INVERSION         ( NCT5104D_DGA_GSR +3 )
-#define NCT5104D_DGA_STATUS            ( NCT5104D_DGA_GSR +4 ) /* active edge detection */
-
-enum
-{
-LOW,
-HIGH,
-} e_pin_state;
+#define NCT5104D_DGA_IO                0x66                    /* input or output */
+#define NCT5104D_DGA_DATA              0x67                    /* set pin state */
+#define NCT5104D_DGA_INVERSION         0x68                   
+#define NCT5104D_DGA_STATUS            0x69                     /* active edge detection */
 
 struct platform_data_ntc5104d {
  int chip_addr;
  int num_gpio;
- void (*set_pin)(struct platform_data_ntc5104d* pdata,u8 pin,e_pin_state state);
+ void (*set_pin)(struct platform_data_ntc5104d* pdata,u8 pin,u8 state);
  void (*get_pin)(struct platform_data_ntc5104d* pdata,u8 pin);
 };

@@ -7,7 +7,7 @@
 
 #include "nct5104d_gpio.h"
 
-static int gpio_access_addr = NCT5104D_REG_BASE ;
+static int gpio_access_addr = NCT5104D_DGA_GSR ;
 
 module_param(gpio_access_addr, int, 0644);
 MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
@@ -61,8 +61,12 @@ static inline void nct5104d_efm_disable(void)
 
 static inline void nct5104d_select_logical_device(int ld)
 {
-	outb(NCT5104D_REG_LDEVICE, NCT5104D_DEVICE_ADDR);
-	outb(ld, NCT5104D_DEVICE_ADDR + 1);
+	nct5104d_writeb(NCT5104D_REG_LDEVICE, ld)
+}
+
+static inline int nct5104d_get_logical_device(int ld)
+{
+	return nct5104d_readb(NCT5104D_REG_LDEVICE)
 }
 
 
@@ -75,7 +79,8 @@ static void nct5104d_gpio_get_pin(struct platform_data_ntc5104d* pdata,u8 pin)
 }
 
 /* Reset the device. */
-static void nct5104d_gpio_set_pin(struct platform_data_ntc5104d* pdata,u8 pin,e_pin_state state)
+//TODO -----> Write support for both GPIO ports at once!
+static void nct5104d_gpio_set_pin(struct platform_data_ntc5104d* pdata,u8 pin,u8 state)
 {
     printk(KERN_ALERT " %s\n", __FUNCTION__);
 }
@@ -115,16 +120,40 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 		return res; 
 	printk(KERN_ALERT "nct5104d_gpio: EFM is now enabled ... \n");
 
-	//TODO implement proper address config with 16byte
-	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,pdata->gpio_access_addr);
 
+	/**
+	*
+	* This part is responsible for configuration
+	* of direct GPIO access 
+	*/
+	nct5104d_select_logical_device(NCT5104D_LDEVICE_8)
+
+	//TODO implement proper address config with 16byte
+	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,gpio_access_addr);
 	val = nct5104d_readw(NCT5104D_REG_GPIO_BASEADDR_H);
 	printk(KERN_ALERT "nct5104d_gpio: DGA base configured to 0x%04x\n",val);
 
-	// Select GPIO1
+
+
+	// Select GPIO1 & set all to output
 	nct5104d_writeb(NCT5104D_DGA_GSR, 1);
-    nct5104d_writeb(NCT5104D_DGA_DATA, 255);
+	nct5104d_writeb(NCT5104D_DGA_IO,255);
+
+	// read current data state 
+    val = 0;
+	val = nct5104d_readb(NCT5104D_DGA_DATA);
+	printk(KERN_ALERT "nct5104d_gpio: DGA[1] data is  0x%02x\n",val);
 	
+	// write 255 to all pins 
+	nct5104d_writeb(NCT5104D_DGA_DATA,255);
+
+	// read current data state 
+    val = 0;
+	val = nct5104d_readb(NCT5104D_DGA_DATA);
+	printk(KERN_ALERT "nct5104d_gpio: DGA[1] data is now....  0x%02x\n",val);
+
+
+
 	return 0;
 }
 
@@ -152,8 +181,6 @@ void __init nct5104d_init_platform_data(void)
 
 static int __init nct5104d_driver_init(void)
 {
-	int err;
-	u8 val;
 	nct5104d_init_platform_data();
 	printk(KERN_ALERT "%s: registered platform device",DRIVER_NAME);
 
