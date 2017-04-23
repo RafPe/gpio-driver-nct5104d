@@ -102,6 +102,8 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
     gpio_arg_t q_gpio;
     nct5104dctl_arg_t q_ctl;
 
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd => %d\n", cmd);
+
     switch (cmd)
     {
         case IOCTL_GET_REG:
@@ -109,7 +111,10 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             {
                 return -EACCES;
             }			
+
 			q_ctl.value = nct5104d_readb(q_ctl.registry);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] registry is  => %d\n", q_ctl.registry);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] value is  => %d\n", q_ctl.value);
 
             if (copy_to_user((nct5104dctl_arg_t *)arg, &q_ctl, sizeof(nct5104dctl_arg_t)))
             {
