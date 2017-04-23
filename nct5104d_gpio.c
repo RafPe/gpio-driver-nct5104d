@@ -316,6 +316,24 @@ void __init nct5104d_init_platform_data(void)
 {
     /* Register "nct5104d platform device" with the OS. */
 	platform_device_register(&device_pdevice_ntc5104d);
+
+
+	//TODO - implement the following registration for platform device
+
+	// 	pdev = platform_device_alloc("mydev", id);
+	// if (pdev) {
+	// 	err = platform_device_add_resources(pdev, &resources,
+	// 					    ARRAY_SIZE(resources));
+	// 	if (err == 0)
+	// 		err = platform_device_add_data(pdev, &platform_data,
+	// 					       sizeof(platform_data));
+	// 	if (err == 0)
+	// 		err = platform_device_add(pdev);
+	// } else {
+	// 	err = -ENOMEM;
+	// }
+	// if (err)
+	// 	platform_device_put(pdev);
 }
 
 static int __init nct5104d_driver_init(void)
