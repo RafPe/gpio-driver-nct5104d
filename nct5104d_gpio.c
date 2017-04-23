@@ -346,7 +346,8 @@ static void __exit nct5104d_driver_exit(void)
 	class_destroy(cl);                             // remove the device class
 	unregister_chrdev(majorNumber, DRIVER_NAME);             // unregister the major number
 
-	platform_driver_unregister(&device_pdevice_ntc5104d);
+	platform_driver_unregister(&ntc5104d_pldriver);
+	platform_device_unregister(&device_pdevice_ntc5104d);
 
 	mutex_destroy(&ebbchar_mutex);        /// destroy the dynamically-allocated mutex
     return;
