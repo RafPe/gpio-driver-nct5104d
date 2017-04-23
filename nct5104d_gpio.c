@@ -9,8 +9,6 @@
 
 static int gpio_access_addr = NCT5104D_REG_BASE ;
 
-static void my_device_reset(struct platform_data_ntc5104d* pdata);
-
 module_param(gpio_access_addr, int, 0644);
 MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
 
@@ -70,19 +68,25 @@ static inline void nct5104d_select_logical_device(int ld)
 
 /*--------  Platform data/platform and driver  --------*/
 
+/* Reset the device. */
+static void nct5104d_gpio_get_pin(struct platform_data_ntc5104d* pdata,u8 pin)
+{
+    printk(KERN_ALERT " %s\n", __FUNCTION__);
+}
+
+/* Reset the device. */
+static void nct5104d_gpio_set_pin(struct platform_data_ntc5104d* pdata,u8 pin,e_pin_state state)
+{
+    printk(KERN_ALERT " %s\n", __FUNCTION__);
+}
+
 static struct platform_data_ntc5104d device_pdata_ntc5104d = 
 {
  .chip_addr = NCT5104D_DEVICE_ADDR ,
  .num_gpio  = 16 ,
- .gpio_access_addr = gpio_access_addr , 
- .reset = my_device_reset ,
+ .get_pin = nct5104d_gpio_get_pin ,
+ .set_pin = nct5104d_gpio_set_pin ,
 };
-
-/* Reset the device. */
-static void my_device_reset(struct platform_data_ntc5104d* pdata)
-{
-    printk(KERN_ALERT " %s\n", __FUNCTION__);
-}
 
 
 static struct platform_device device_pdevice_ntc5104d = 
@@ -104,7 +108,7 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 
 	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%02x\n",pdata->chip_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
-	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",pdata->gpio_access_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",gpio_access_addr);
 	
    	res = nct5104d_efm_enable();
 	if (res)
@@ -115,10 +119,12 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,pdata->gpio_access_addr);
 
 	val = nct5104d_readw(NCT5104D_REG_GPIO_BASEADDR_H);
-	printk(KERN_ALERT "nct5104d_gpio: gpio access addr configured to 0x%04x\n",val);
+	printk(KERN_ALERT "nct5104d_gpio: DGA base configured to 0x%04x\n",val);
 
-
-
+	// Select GPIO1
+	nct5104d_writeb(NCT5104D_DGA_GSR, 1);
+    nct5104d_writeb(NCT5104D_DGA_DATA, 255);
+	
 	return 0;
 }
 

@@ -15,15 +15,22 @@
 
 
 
-#define NCT5104D_REG_BASE               0x65
-#define NCT5104D_REG_GPIO_IO            ( NCT5104D_REG_BASE_ADDR +1 )
-#define NCT5104D_REG_GPIO_DATA          ( NCT5104D_REG_BASE_ADDR +2 )
-#define NCT5104D_REG_GPIO_INVERSION     ( NCT5104D_REG_BASE_ADDR +3 )
-#define NCT5104D_REG_GPIO_STATUS        ( NCT5104D_REG_BASE_ADDR +4 )
+/*--------  Direct GPIO Access (DGA)  --------*/
+#define NCT5104D_DGA_GSR               0x65                    /* Select GPIO */
+#define NCT5104D_DGA_IO                ( NCT5104D_DGA_GSR +1 ) /* input or output */
+#define NCT5104D_DGA_DATA              ( NCT5104D_DGA_GSR +2 ) /* set pin state */
+#define NCT5104D_DGA_INVERSION         ( NCT5104D_DGA_GSR +3 )
+#define NCT5104D_DGA_STATUS            ( NCT5104D_DGA_GSR +4 ) /* active edge detection */
+
+enum
+{
+LOW,
+HIGH,
+} e_pin_state;
 
 struct platform_data_ntc5104d {
  int chip_addr;
  int num_gpio;
- int gpio_access_addr;
- void (*reset)(struct platform_data_ntc5104d* pdata);
+ void (*set_pin)(struct platform_data_ntc5104d* pdata,u8 pin,e_pin_state state);
+ void (*get_pin)(struct platform_data_ntc5104d* pdata,u8 pin);
 };
