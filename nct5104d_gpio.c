@@ -64,7 +64,7 @@ static inline void nct5104d_select_logical_device(int ld)
 	nct5104d_writeb(NCT5104D_REG_LDEVICE, ld)
 }
 
-static inline int nct5104d_get_logical_device(int ld)
+static inline int nct5104d_get_logical_device()
 {
 	return nct5104d_readb(NCT5104D_REG_LDEVICE)
 }
@@ -126,7 +126,16 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 	* This part is responsible for configuration
 	* of direct GPIO access 
 	*/
+	val = 0;
+	val = nct5104d_get_logical_device();
+	printk(KERN_ALERT "nct5104d_gpio: Current selected logical device 0x%04x\n",val);
+
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_8)
+	printk(KERN_ALERT "nct5104d_gpio: Switched logical device ... \n");
+
+	val = 0;
+	val = nct5104d_get_logical_device();
+	printk(KERN_ALERT "nct5104d_gpio: Current selected logical device 0x%04x\n",val);
 
 	//TODO implement proper address config with 16byte
 	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,gpio_access_addr);
