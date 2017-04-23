@@ -1,3 +1,5 @@
+#include <linux/ioctl.h>
+
 #define DRIVER_NAME "nct5104d_gpio"
 
 #define NCT5104D_DEVICE_ADDR            0x2E
@@ -23,6 +25,25 @@
 #define NCT5104D_DGA_DATA              0x67                    /* set pin state */
 #define NCT5104D_DGA_INVERSION         0x68                   
 #define NCT5104D_DGA_STATUS            0x69                     /* active edge detection */
+
+
+
+/*--------  ioctl  --------*/
+typedef struct
+{
+    int pin, state, direction;
+} gpio_arg_t;
+ 
+#define IOCTL_GET_PIN _IOR('q', 1, gpio_arg_t *)
+#define IOCTL_SET_PIN _IOW('q', 2, gpio_arg_t *)
+
+typedef struct
+{
+    int registry, value;
+} nct5104dctl_arg_t;
+
+#define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
+#define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
 
 
 enum nct5104d_gpio_status {

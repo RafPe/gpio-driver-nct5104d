@@ -7,7 +7,22 @@
 #include <getopt.h>
 #include <stdlib.h>
  
-#include "query_ioctl.h"
+ typedef struct
+{
+    int pin, state, direction;
+} gpio_arg_t;
+ 
+#define IOCTL_GET_PIN _IOR('q', 1, gpio_arg_t *)
+#define IOCTL_SET_PIN _IOW('q', 2, gpio_arg_t *)
+
+typedef struct
+{
+    int registry, value;
+} nct5104dctl_arg_t;
+
+#define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
+#define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
+
 
 enum
 {
@@ -33,8 +48,9 @@ void print_usage()
 
 void get_vars(int fd)
 {
+        printf("Request - cmd : %d\n", IOCTL_GET_REG);
+        printf("Request registry: %d\n", q.registry);
 
- 
     if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
     {
         perror("query_apps ioctl get");
@@ -51,6 +67,8 @@ int main(int argc, char *argv[])
     char *file_name = "/dev/nct5104d_gpio";
     int fd;
 
+    q.value=0;
+
     while ((ch = getopt_long(argc, argv, "t:a:", long_options, NULL)) != -1)
     {
         // check to see if a single character or long option came through
@@ -65,7 +83,6 @@ int main(int argc, char *argv[])
                 {
                     option = e_set;
                 }
-
                 break;
             case 'r':
                 q.registry = atoi(optarg); 
@@ -73,7 +90,8 @@ int main(int argc, char *argv[])
             case 'v':
                 q.value = atoi(optarg);
                 break;
-             default: print_usage();                               
+             default: print_usage();  
+                      return 0;                             
         }
     }
 

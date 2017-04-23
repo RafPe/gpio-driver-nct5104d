@@ -5,4 +5,4 @@ all:
 clean:
         make -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) clean
 app: 
-        gcc -Wall -o nct5104dctl nct5104dctl.c query_ioctl.h
+        gcc -Wall -o nct5104dctl nct5104dctl.c
