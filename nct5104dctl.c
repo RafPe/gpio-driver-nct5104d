@@ -51,7 +51,7 @@ void print_usage()
 
 void get_vars(int fd)
 {
-        printf("Request - cmd : %zu\n", IOCTL_CMD_GET_REG);
+        printf("Request - cmd : %d\n", IOCTL_CMD_GET_REG);
         printf("Request registry: %d\n", q.registry);
 
     if (ioctl(fd, IOCTL_CMD_GET_REG, &q) == -1)
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
     q.value=0;
 
-    q.registry = 0x07
+    q.registry = 0x07;
 
     // while ((ch = getopt_long(argc, argv, "t:a:", long_options, NULL)) != -1)
     // {
