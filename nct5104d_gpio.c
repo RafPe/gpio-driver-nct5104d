@@ -13,9 +13,8 @@
 
 
 #include "nct5104d_gpio.h"
-#include "query_ioctl.h"
 
-static DEFINE_MUTEX(ebbchar_mutex);
+static DEFINE_MUTEX(nct5104d_mutex);
 
 
 #define FIRST_MINOR 0
@@ -95,7 +94,7 @@ static inline void nct5104d_soft_reset(void)
 /*--------  Character device  --------*/
 static int nct5104d_cdev_open(struct inode *i, struct file *f)
 {
-	if(!mutex_trylock(&ebbchar_mutex)){    /// Try to acquire the mutex (i.e., put the lock on/down)
+	if(!mutex_trylock(&nct5104d_mutex)){    /// Try to acquire the mutex (i.e., put the lock on/down)
 											/// returns 1 if successful and 0 if there is contention
 		printk(KERN_ALERT "nct5104d_gpio: Device in use by another process");
 		return -EBUSY;
@@ -105,7 +104,7 @@ static int nct5104d_cdev_open(struct inode *i, struct file *f)
 }
 static int nct5104d_cdev_close(struct inode *i, struct file *f)
 {
-	mutex_unlock(&ebbchar_mutex);          /// Releases the mutex (i.e., the lock goes up)
+	mutex_unlock(&nct5104d_mutex);          /// Releases the mutex (i.e., the lock goes up)
     return 0;
 }
 
@@ -342,7 +341,7 @@ static int __init nct5104d_driver_init(void)
 	
 	printk(KERN_ALERT "nct5104d_gpio: Initialiazing device ... \n");
 
-	mutex_init(&ebbchar_mutex);       /// Initialize the mutex lock dynamically at runtime
+	mutex_init(&nct5104d_mutex);       /// Initialize the mutex lock dynamically at runtime
 
 	res = nct5104d_cdev_register();
 	if (res)
@@ -369,7 +368,7 @@ static void __exit nct5104d_driver_exit(void)
 	platform_driver_unregister(&ntc5104d_pldriver);
 	platform_device_unregister(&device_pdevice_ntc5104d);
 
-	mutex_destroy(&ebbchar_mutex);        /// destroy the dynamically-allocated mutex
+	mutex_destroy(&nct5104d_mutex);        /// destroy the dynamically-allocated mutex
     return;
 }
 
