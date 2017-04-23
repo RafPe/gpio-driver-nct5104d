@@ -7,7 +7,10 @@
 
 #include "nct5104d_gpio.h"
 
-MODULE_LICENSE("GPL");
+static int gpio_access_addr = NCT5104D_REG_BASE ;
+
+module_param(gpio_access_addr, int, 0644);
+MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
 
 static void my_device_reset(struct platform_data_ntc5104d* pdata);
 
@@ -18,7 +21,7 @@ static struct platform_data_ntc5104d device_pdata_ntc5104d =
 {
  .chip_addr = NCT5104D_DEVICE_ADDR ,
  .num_gpio  = 16 ,
- .gpio_access_addr = NCT5104D_REG_BASE , 
+ .gpio_access_addr = gpio_access_addr , 
  .reset = my_device_reset ,
 };
 
@@ -42,13 +45,30 @@ static struct platform_device device_pdevice_ntc5104d =
 
 static int ntc5104d_drv_probe(struct platform_device *pdev)
 {
+	static int res;
+
 	struct platform_data_ntc5104d *pdata = dev_get_platdata(&pdev->dev);
 
-	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : %d\n",pdata->chip_addr );
-	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%04x\n",pdata->chip_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%02x\n",pdata->chip_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
-	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%04x\n",pdata->gpio_access_addr);
-	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : %d\n",pdata->gpio_access_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",pdata->gpio_access_addr);
+	
+   	res = nct5104d_efm_enable();
+	if (err)
+		return err; 
+	printk(KERN_ALERT "nct5104d: EFM is now enabled ... \n");
+
+	val = nct5104d_readb(0x61);
+	printk(KERN_ALERT "nct5104d: value before is  0x%04x\n",val);
+
+
+	nct5104d_writeb(0x61,NCT5104D_REG_BASE);
+	printk(KERN_ALERT "nct5104d: wrote to device");
+
+	val = nct5104d_readb(0x61);
+	printk(KERN_ALERT "nct5104d: value after is  0x%04x\n",val);
+
+
 
 	return 0;
 }
@@ -92,7 +112,7 @@ static inline void nct5104d_writeb(int reg, int val)
 static inline int nct5104d_efm_enable(void)
 {
 	if (!request_muxed_region(NCT5104D_DEVICE_ADDR, 2, DRIVER_NAME)) {
-		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", base);
+		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", NCT5104D_DEVICE_ADDR);
 		return -EBUSY;
 	}
 
@@ -107,7 +127,6 @@ static inline void nct5104d_efm_disable(void)
 	outb(NCT5104D_EFM_DISABLE, NCT5104D_DEVICE_ADDR);
 	release_region(NCT5104D_DEVICE_ADDR, 2);
 }
-
 
 static inline void nct5104d_select_logical_device(int ld)
 {
@@ -131,22 +150,7 @@ static int __init nct5104d_driver_init(void)
 	nct5104d_init_platform_data();
 	printk(KERN_ALERT "%s: registered platform device",DRIVER_NAME);
 
-	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe); //TODO check return value
-
-   	err = nct5104d_efm_enable();
-	if (err)
-		return err; // #TODO pointer error?
-	printk(KERN_ALERT "nct5104d: EFM is now enabled ... \n");
-
-	val = nct5104d_readb(0x61);
-	printk(KERN_ALERT "nct5104d: value before is  0x%04x\n",val);
-
-
-	nct5104d_writeb(0x61,NCT5104D_REG_BASE);
-	printk(KERN_ALERT "nct5104d: wrote to device");
-
-	val = nct5104d_readb(0x61);
-	printk(KERN_ALERT "nct5104d: value after is  0x%04x\n",val);
+	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe);
 
     return 0;
 }
@@ -160,3 +164,9 @@ static void __exit nct5104d_driver_exit(void)
 
 module_init(nct5104d_driver_init);
 module_exit(nct5104d_driver_exit);
+
+
+
+MODULE_AUTHOR("RafPe");
+MODULE_LICENSE("GPL");
+MODULE_DESCRIPTION("Define param gor GPIO access");
