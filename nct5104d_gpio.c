@@ -9,10 +9,63 @@
 
 static int gpio_access_addr = NCT5104D_REG_BASE ;
 
+static void my_device_reset(struct platform_data_ntc5104d* pdata);
+
 module_param(gpio_access_addr, int, 0644);
 MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
 
-static void my_device_reset(struct platform_data_ntc5104d* pdata);
+
+
+
+/*--------  CORE communication functions  --------*/
+static int nct5104d_readw(int reg)
+{
+	int val;
+
+	outb(reg++, NCT5104D_DEVICE_ADDR);
+	val = inb(NCT5104D_DEVICE_ADDR + 1) << 8;
+	outb(reg, NCT5104D_DEVICE_ADDR);
+	val |= inb(NCT5104D_DEVICE_ADDR + 1);
+
+	return val;
+}
+
+static inline int nct5104d_readb(int reg)
+{
+	outb(reg, NCT5104D_DEVICE_ADDR);
+	return inb(NCT5104D_DEVICE_ADDR + 1);
+}
+
+static inline void nct5104d_writeb(int reg, u8 val)
+{
+	outb(reg, NCT5104D_DEVICE_ADDR);
+	outb(val, NCT5104D_DEVICE_ADDR + 1);
+}
+
+static inline int nct5104d_efm_enable(void)
+{
+	if (!request_muxed_region(NCT5104D_DEVICE_ADDR, 2, DRIVER_NAME)) {
+		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", NCT5104D_DEVICE_ADDR);
+		return -EBUSY;
+	}
+
+	outb(NCT5104D_EFM_ENABLE, NCT5104D_DEVICE_ADDR);
+	outb(NCT5104D_EFM_ENABLE, NCT5104D_DEVICE_ADDR);
+
+	return 0;
+}
+
+static inline void nct5104d_efm_disable(void)
+{
+	outb(NCT5104D_EFM_DISABLE, NCT5104D_DEVICE_ADDR);
+	release_region(NCT5104D_DEVICE_ADDR, 2);
+}
+
+static inline void nct5104d_select_logical_device(int ld)
+{
+	outb(NCT5104D_REG_LDEVICE, NCT5104D_DEVICE_ADDR);
+	outb(ld, NCT5104D_DEVICE_ADDR + 1);
+}
 
 
 /*--------  Platform data/platform and driver  --------*/
@@ -45,7 +98,7 @@ static struct platform_device device_pdevice_ntc5104d =
 
 static int ntc5104d_drv_probe(struct platform_device *pdev)
 {
-	static int res;
+	static int res,val;
 
 	struct platform_data_ntc5104d *pdata = dev_get_platdata(&pdev->dev);
 
@@ -54,19 +107,15 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",pdata->gpio_access_addr);
 	
    	res = nct5104d_efm_enable();
-	if (err)
-		return err; 
-	printk(KERN_ALERT "nct5104d: EFM is now enabled ... \n");
+	if (res)
+		return res; 
+	printk(KERN_ALERT "nct5104d_gpio: EFM is now enabled ... \n");
 
-	val = nct5104d_readb(0x61);
-	printk(KERN_ALERT "nct5104d: value before is  0x%04x\n",val);
+	//TODO implement proper address config with 16byte
+	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,pdata->gpio_access_addr);
 
-
-	nct5104d_writeb(0x61,NCT5104D_REG_BASE);
-	printk(KERN_ALERT "nct5104d: wrote to device");
-
-	val = nct5104d_readb(0x61);
-	printk(KERN_ALERT "nct5104d: value after is  0x%04x\n",val);
+	val = nct5104d_readw(NCT5104D_REG_GPIO_BASEADDR_H);
+	printk(KERN_ALERT "nct5104d_gpio: gpio access addr configured to 0x%04x\n",val);
 
 
 
@@ -86,54 +135,6 @@ static struct platform_driver ntc5104d_pldriver = {
 			.owner = THIS_MODULE,
     },
 };
-
-/*--------  CORE communication functions  --------*/
-static int nct5104d_readw(int reg)
-{
-	int val;
-
-	outb(reg++, NCT5104D_DEVICE_ADDR);
-	val = inb(NCT5104D_DEVICE_ADDR + 1) << 8;
-	outb(reg, NCT5104D_DEVICE_ADDR);
-	val |= inb(NCT5104D_DEVICE_ADDR + 1);
-
-	return val;
-}
-static inline int nct5104d_readb(int reg)
-{
-	outb(reg, NCT5104D_DEVICE_ADDR);
-	return inb(NCT5104D_DEVICE_ADDR + 1);
-}
-static inline void nct5104d_writeb(int reg, int val)
-{
-	outb(reg, NCT5104D_DEVICE_ADDR);
-	outb(val, NCT5104D_DEVICE_ADDR + 1);
-}
-static inline int nct5104d_efm_enable(void)
-{
-	if (!request_muxed_region(NCT5104D_DEVICE_ADDR, 2, DRIVER_NAME)) {
-		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", NCT5104D_DEVICE_ADDR);
-		return -EBUSY;
-	}
-
-	outb(NCT5104D_EFM_ENABLE, NCT5104D_DEVICE_ADDR);
-	outb(NCT5104D_EFM_ENABLE, NCT5104D_DEVICE_ADDR);
-
-	return 0;
-}
-
-static inline void nct5104d_efm_disable(void)
-{
-	outb(NCT5104D_EFM_DISABLE, NCT5104D_DEVICE_ADDR);
-	release_region(NCT5104D_DEVICE_ADDR, 2);
-}
-
-static inline void nct5104d_select_logical_device(int ld)
-{
-	outb(NCT5104D_REG_LDEVICE, NCT5104D_DEVICE_ADDR);
-	outb(ld, NCT5104D_DEVICE_ADDR + 1);
-}
-
 
 
 /*--------  initialization  --------*/

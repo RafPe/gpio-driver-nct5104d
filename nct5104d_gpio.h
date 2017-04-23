@@ -3,12 +3,17 @@
 #define NCT5104D_DEVICE_ADDR            0x2E
 
 #define NCT5104D_REG_LDEVICE     		0x07	
+#define NCT5104D_REG_GPIO_BASEADDR_H    0x60
+#define NCT5104D_REG_GPIO_BASEADDR_L    0x61
+
 #define NCT5104D_LDEVICE_GPIO    		0x07
 
 
 /*--------  extended function mode  --------*/
 #define NCT5104D_EFM_ENABLE	    	    0x87	
 #define NCT5104D_EFM_DISABLE		    0xAA	
+
+
 
 #define NCT5104D_REG_BASE               0x65
 #define NCT5104D_REG_GPIO_IO            ( NCT5104D_REG_BASE_ADDR +1 )
