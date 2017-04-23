@@ -45,7 +45,7 @@ static int ntc5104d_drv_probe(struct platform_device *pdev)
 	struct platform_data_ntc5104d *pdata = dev_get_platdata(&pdev->dev);
 
 	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : %d\n",pdata->chip_addr );
-	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%04x\n"pdata->chip_addr);
+	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%04x\n",pdata->chip_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%04x\n",pdata->gpio_access_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : %d\n",pdata->gpio_access_addr);
@@ -68,51 +68,54 @@ static struct platform_driver ntc5104d_pldriver = {
 };
 
 /*--------  CORE communication functions  --------*/
-static int nct5104d_readw(int base, int reg)
+static int nct5104d_readw(int reg)
 {
 	int val;
 
-	outb(reg++, base);
-	val = inb(base + 1) << 8;
-	outb(reg, base);
-	val |= inb(base + 1);
+	outb(reg++, NCT5104D_DEVICE_ADDR);
+	val = inb(NCT5104D_DEVICE_ADDR + 1) << 8;
+	outb(reg, NCT5104D_DEVICE_ADDR);
+	val |= inb(NCT5104D_DEVICE_ADDR + 1);
 
 	return val;
 }
-static inline int nct5104d_readb(int base, int reg)
+static inline int nct5104d_readb(int reg)
 {
-	outb(reg, base);
-	return inb(base + 1);
+	outb(reg, NCT5104D_DEVICE_ADDR);
+	return inb(NCT5104D_DEVICE_ADDR + 1);
 }
-static inline void nct5104d_writeb(int base, int reg, int val)
+static inline void nct5104d_writeb(int reg, int val)
 {
-	outb(reg, base);
-	outb(val, base + 1);
+	outb(reg, NCT5104D_DEVICE_ADDR);
+	outb(val, NCT5104D_DEVICE_ADDR + 1);
 }
-static inline int nct5104d_enable(int base)
+static inline int nct5104d_efm_enable(void)
 {
-	if (!request_muxed_region(base, 2, DRIVER_NAME)) {
+	if (!request_muxed_region(NCT5104D_DEVICE_ADDR, 2, DRIVER_NAME)) {
 		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", base);
 		return -EBUSY;
 	}
 
-	outb(NCT5104D_SUPERIO_ENABLE, base);
-	outb(NCT5104D_SUPERIO_ENABLE, base);
+	outb(NCT5104D_EFM_ENABLE, NCT5104D_DEVICE_ADDR);
+	outb(NCT5104D_EFM_ENABLE, NCT5104D_DEVICE_ADDR);
 
 	return 0;
 }
 
-static inline void nct5104d_select(int base, int ld)
+static inline void nct5104d_efm_disable(void)
 {
-	outb(NCT5104D_LDEV_SELECT, base);
-	outb(ld, base + 1);
+	outb(NCT5104D_EFM_DISABLE, NCT5104D_DEVICE_ADDR);
+	release_region(NCT5104D_DEVICE_ADDR, 2);
 }
 
-static inline void nct5104d_disable(int base)
+
+static inline void nct5104d_select_logical_device(int ld)
 {
-	outb(NCT5104D_SUPERIO_DISABLE, base);
-	release_region(base, 2);
+	outb(NCT5104D_REG_LDEVICE, NCT5104D_DEVICE_ADDR);
+	outb(ld, NCT5104D_DEVICE_ADDR + 1);
 }
+
+
 
 /*--------  initialization  --------*/
 void __init nct5104d_init_platform_data(void)
@@ -123,30 +126,27 @@ void __init nct5104d_init_platform_data(void)
 
 static int __init nct5104d_driver_init(void)
 {
+	int err;
+	u8 val;
 	nct5104d_init_platform_data();
-	printk(KERN_ALERT "%s: registered platform device device",DRIVER_NAME);
+	printk(KERN_ALERT "%s: registered platform device",DRIVER_NAME);
 
 	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe); //TODO check return value
 
-   	// err = nct5104d_enable( NCT5104D_DEVICE_ADDR );
-	// if (err)
-	// 	return err; // #TODO pointer error?
-	// printk(KERN_ALERT "nct5104d: is now enabled ... \n");
+   	err = nct5104d_efm_enable();
+	if (err)
+		return err; // #TODO pointer error?
+	printk(KERN_ALERT "nct5104d: EFM is now enabled ... \n");
 
-	// //TODO if we have found device we probe it ? 
-
-	// val = nct5104d_readb( NCT5104D_DEVICE_ADDR,0x61);
-	// printk(KERN_ALERT "nct5104d: value before is  0x%04x\n",val);
+	val = nct5104d_readb(0x61);
+	printk(KERN_ALERT "nct5104d: value before is  0x%04x\n",val);
 
 
-	// nct5104d_writeb( NCT5104D_DEVICE_ADDR,0x61,0x67);
-	// printk(KERN_ALERT "nct5104d: wrote to device");
+	nct5104d_writeb(0x61,NCT5104D_REG_BASE);
+	printk(KERN_ALERT "nct5104d: wrote to device");
 
-	// val = nct5104d_readb( NCT5104D_DEVICE_ADDR,0x61);
-	// printk(KERN_ALERT "nct5104d: value after is  0x%04x\n",val);
-	
-
-
+	val = nct5104d_readb(0x61);
+	printk(KERN_ALERT "nct5104d: value after is  0x%04x\n",val);
 
     return 0;
 }
@@ -154,8 +154,7 @@ static int __init nct5104d_driver_init(void)
 /*--------  exit cleanup  --------*/
 static void __exit nct5104d_driver_exit(void)
 {
-	printk(KERN_ALERT "nct5104d: unregistered platform device device");
-    printk(KERN_ALERT "\n Thanks....Exiting sample Platform driver... \n");
+	printk(KERN_ALERT "nct5104d: unregistered platform device");
     return;
 }
 
