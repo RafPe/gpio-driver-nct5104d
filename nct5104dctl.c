@@ -1,11 +1,11 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <getopt.h>
-#include <stdlib.h>
  
  typedef struct
 {
@@ -20,11 +20,14 @@ typedef struct
     int value;
 } nct5104dctl_arg_t;
 
-#define IOCTL_CMD_GET_PIN 1
-#define IOCTL_CMD_SET_PIN 2
+#define IOCTL_GET_PIN _IOR('q', 1, gpio_arg_t *)
+#define IOCTL_SET_PIN _IOW('q', 2, gpio_arg_t *)
 
-#define IOCTL_CMD_GET_REG 3
-#define IOCTL_CMD_SET_REG 4
+
+#define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
+#define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
+
+
 
 
 enum
@@ -45,18 +48,20 @@ static struct option long_options[] =
 
 void print_usage() 
 {
-    printf("Usage: rectangle [ap] -l num -b num\n");
+ printf("\n Usage : nct5104dctl <operation> -reg <registry> -val <value>\n"); 
+ printf("\n <operation> can be 'get', 'set'\n"); 
+ printf("\n For example: nct5104dctl get 0x07\n");
+
 }
 
 
 void get_vars(int fd)
 {
-        printf("Request - cmd : %d\n", IOCTL_CMD_GET_REG);
-        printf("Request registry: %d\n", q.registry);
+    printf("Request registry: %d\n", q.registry);
 
-    if (ioctl(fd, IOCTL_CMD_GET_REG, &q) == -1)
+    if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
     {
-        perror("query_apps ioctl get");
+        perror("nct5104dctl ioctl get");
     }
     else
     {
@@ -67,57 +72,88 @@ void get_vars(int fd)
  
 int main(int argc, char *argv[])
 {
+    int option = 0;
     char *file_name = "/dev/nct5104d_gpio";
     int fd;
 
-    q.value=0;
-
-    q.registry = 0x07;
-
-    // while ((ch = getopt_long(argc, argv, "t:a:", long_options, NULL)) != -1)
-    // {
-    //     // check to see if a single character or long option came through
-    //     switch (ch)
-    //     {
-    //         case 'a':
-    //             if (strcmp(optarg, "get") == 0)
-    //             {
-    //                 option = e_get;
-    //             }
-    //             else
-    //             {
-    //                 option = e_set;
-    //             }
-    //             break;
-    //         case 'r':
-    //             q.registry = atoi(optarg); 
-    //             break;
-    //         case 'v':
-    //             q.value = atoi(optarg);
-    //             break;
-    //          default: print_usage();  
-    //                   return 0;                             
-    //     }
-    // }
-
-
-    fd = open(file_name, O_RDWR);
-    if (fd == -1)
+    if(argc < 4)
     {
-        perror("query_apps open");
-        return 2;
+        print_usage();
+        return 1;
     }
 
-    if(option == e_get)
-    {
-        get_vars(fd);
+    q.registry = -1;
+    q.value = 0;
+
+
+    while ((option = getopt(argc, argv,"a:r:v:")) != -1) {
+        switch (option) {
+             case 'a' :         printf("I got [%s] as action param\n",optarg);
+                        if (strcmp(optarg, "get") == 0)
+                            {
+                                option = 0;
+                                printf("setup option to be get\n");
+                            }
+                            else
+                            {
+                                option = 1;
+                                printf("setup option to be set\n");
+                            }
+                            break;
+             case 'r' : q.registry = atoi(optarg); 
+                 break;
+             case 'v' : q.value = atoi(optarg); 
+                 break;
+             default: print_usage(); 
+                 exit(EXIT_FAILURE);
+        }
+    }
+
+    if (option == 0) {
+        printf("I would get something for you\n");
     }
     else
     {
-
+                printf("I would get something for you\n");
     }
 
-    close (fd);
+
+    if (q.registry == -1) {
+        print_usage();
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Registry : %d\n", q.registry);
+    printf("Value: %d\n", q.value);
+
+
+    // fd = open(file_name, O_RDWR);
+    // if (fd == -1)
+    // {
+    //     perror("query_apps open");
+    //     return 2;
+    // }
+
+    // if(option == e_get)
+    // {
+    //     get_vars(fd);
+    // }
+    // else
+    // {
+
+    // }
+
+    // close (fd);
  
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
