@@ -55,11 +55,36 @@ void print_usage()
 }
 
 
-void get_vars(int fd)
+static int open_file_device(char *file_device_name)
+(
+    file_dev = open(file_device_name, O_RDWR);
+    if (fd == -1)
+    {
+        perror("nct5104dctl open");
+        return 2;
+    }
+
+    return file_dev;
+}
+
+void get_registry_value(int fd)
 {
     if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
     {
         perror("nct5104dctl ioctl get");
+    }
+    else
+    {
+        printf("Registry : %d\n", q.registry);
+        printf("Value: %d\n", q.value);
+    }
+}
+
+void set_registry_value(int fd)
+{
+    if (ioctl(fd, IOCTL_SET_REG, &q) == -1)
+    {
+        perror("nct5104dctl ioctl set");
     }
     else
     {
@@ -91,12 +116,10 @@ int main(int argc, char *argv[])
                         if (strcmp(optarg, "get") == 0)
                             {
                                 option = 0;
-                                printf("setup option to be get\n");
                             }
                             else
                             {
                                 option = 1;
-                                printf("setup option to be set\n");
                             }
                             break;
              case 'r' : val = strtol(optarg, &endptr, 16); // convert from hex string  i.e. 0x01
@@ -129,19 +152,17 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    fd = open(file_name, O_RDWR);
-    if (fd == -1)
-    {
-        perror("nct5104dctl open");
-        return 2;
-    }
 
-    if (option == 0) {
-         get_vars(fd);
-    }
-    else
+
+    if (option == 0) 
     {
-        get_vars(fd);
+         fd = open_file_device(file_name);    
+         get_registry_value(fd);
+    }
+    else if (option == 1)
+    {
+        fd = open_file_device(file_name);    
+        set_registry_value(fd);
     }
 
     close (fd);
