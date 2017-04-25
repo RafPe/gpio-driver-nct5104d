@@ -55,21 +55,7 @@ void print_usage()
 }
 
 
-static int open_file_device(char *file_device_name)
-(
-    int file_dev;
-
-    file_dev = open(file_device_name, O_RDWR);
-    if (file_dev == -1)
-    {
-        perror("nct5104dctl open");
-        return 2;
-    }
-
-    return file_dev;
-}
-
-void get_registry_value(int fd)
+void get_vars(int fd)
 {
     if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
     {
@@ -81,24 +67,11 @@ void get_registry_value(int fd)
         printf("Value: %d\n", q.value);
     }
 }
-
-void set_registry_value(int fd)
-{
-    if (ioctl(fd, IOCTL_SET_REG, &q) == -1)
-    {
-        perror("nct5104dctl ioctl set");
-    }
-    else
-    {
-        printf("Registry : %d\n", q.registry);
-        printf("Value: %d\n", q.value);
-    }
-}
  
 int main(int argc, char *argv[])
 {
     int fd ,option = 0 ,indexptr = 0;
-    char *endptr, *str, *file_name = "/dev/nct5104d_gpio";
+    char c, *endptr, *str, *file_name = "/dev/nct5104d_gpio";
     long val;
 
     if(argc < 4)
@@ -112,16 +85,18 @@ int main(int argc, char *argv[])
 
 
     //while ((option = getopt_long(argc, argv, "a:r:v:",long_options, &indexptr)) != -1){
-    while ((option = getopt(argc, argv,"a:r:v:")) != -1) {
-        switch (option) {
+    while ((c = getopt(argc, argv,"a:r:v:")) != -1) {
+        switch (c) {
              case 'a' :         
                         if (strcmp(optarg, "get") == 0)
                             {
                                 option = 0;
+                                printf("setup option to be get\n");
                             }
                             else
                             {
                                 option = 1;
+                                printf("setup option to be set\n");
                             }
                             break;
              case 'r' : val = strtol(optarg, &endptr, 16); // convert from hex string  i.e. 0x01
@@ -154,17 +129,20 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-
+    fd = open(file_name, O_RDWR);
+    if (fd == -1)
+    {
+        perror("nct5104dctl open");
+        return 2;
+    }
 
     if (option == 0) 
     {
-         fd = open_file_device(file_name);    
-         get_registry_value(fd);
+         get_vars(fd);
     }
-    else if (option == 1)
+    else if (option == 1) 
     {
-        fd = open_file_device(file_name);    
-        set_registry_value(fd);
+        get_vars(fd);
     }
 
     close (fd);
