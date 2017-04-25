@@ -57,8 +57,10 @@ void print_usage()
 
 static int open_file_device(char *file_device_name)
 (
+    int file_dev;
+
     file_dev = open(file_device_name, O_RDWR);
-    if (fd == -1)
+    if (file_dev == -1)
     {
         perror("nct5104dctl open");
         return 2;
