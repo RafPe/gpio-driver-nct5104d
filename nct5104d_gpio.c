@@ -50,7 +50,7 @@ static inline int nct5104d_readb(int reg)
 	return inb(NCT5104D_DEVICE_ADDR + 1);
 }
 
-static inline void nct5104d_writeb(int reg, u8 val)
+static inline void nct5104d_writeb(int reg, unsigned val)
 {
 	outb(reg, NCT5104D_DEVICE_ADDR);
 	outb(val, NCT5104D_DEVICE_ADDR + 1);
@@ -206,14 +206,14 @@ static int nct5104d_cdev_register(void)
 /*--------  Platform data/platform and driver  --------*/
 
 /* Reset the device. */
-static void nct5104d_gpio_get_pin(struct platform_data_ntc5104d* pdata,u8 pin)
+static void nct5104d_gpio_get_pin(struct platform_data_ntc5104d* pdata,unsigned pin)
 {
     printk(KERN_ALERT " %s\n", __FUNCTION__);
 }
 
 /* Reset the device. */
 //TODO -----> Write support for both GPIO ports at once!
-static void nct5104d_gpio_set_pin(struct platform_data_ntc5104d* pdata,u8 pin,u8 state)
+static void nct5104d_gpio_set_pin(struct platform_data_ntc5104d* pdata,unsigned pin,unsigned state)
 {
     printk(KERN_ALERT " %s\n", __FUNCTION__);
 }

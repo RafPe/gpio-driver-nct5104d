@@ -64,6 +64,6 @@ enum nct5104d_gpio_dir {
 struct platform_data_ntc5104d {
  int chip_addr;
  int num_gpio;
- void (*set_pin)(struct platform_data_ntc5104d* pdata,u8 pin,u8 state);
- void (*get_pin)(struct platform_data_ntc5104d* pdata,u8 pin);
+ void (*set_pin)(struct platform_data_ntc5104d* pdata,unsigned pin,unsigned state);
+ void (*get_pin)(struct platform_data_ntc5104d* pdata,unsigned pin);
 };
