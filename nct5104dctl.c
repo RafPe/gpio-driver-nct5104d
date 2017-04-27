@@ -37,6 +37,11 @@ typedef struct
 globalargs_t globalargs;
 
 void get_registry(int fd, globalargs_t * globargs);
+void set_registry(int fd, globalargs_t * globargs);
+
+int convert_from_hex_string(char * strhex);
+void print_debug(globalargs_t * globargs);
+
 void print_usage();
 void getoptions(int argc, char ** argv, globalargs_t * globargs);
 int open_file_dev(char * file_dev_name);
@@ -44,10 +49,9 @@ int open_file_dev(char * file_dev_name);
  
 int main(int argc, char *argv[])
 {
-    int ch;
-    int fd ,option = 0 ,indexptr = 0;
-    char c, *endptr, *str, *file_name = NCT5104D_FILE_DEVICE;
-    long val;
+    int fd;
+    char *file_name = NCT5104D_FILE_DEVICE;
+
 
     
     /*--------  default init  --------*/    
@@ -59,16 +63,12 @@ int main(int argc, char *argv[])
 
     
     getoptions( argc,  argv, &globalargs);
-
-    printf("Type to %d\n", globalargs.type);
-    printf("Action to %d\n", globalargs.action);  
-    printf("ID to %d\n", globalargs.id); 
-    printf("value to %d\n", globalargs.value); 
+    
+    //print_debug(&globalargs);
 
     fd = open_file_dev(file_name);
 
-    
-    /*--------  selected get / registry with valid id  --------*/    
+        /*--------  selected get / registry with valid id  --------*/    
     if(globalargs.action == 0 && globalargs.type == 0 && globalargs.id >= 0 && globalargs.id <= 255)
     {
         get_registry(fd, &globalargs);
@@ -88,9 +88,13 @@ int main(int argc, char *argv[])
 
 void print_usage() 
 {
- printf("\n Usage : nct5104dctl <operation> -reg <registry> -val <value>\n"); 
- printf("\n <operation> can be 'get', 'set'\n"); 
- printf("\n For example: nct5104dctl get 0x07\n");
+ printf("\n Usage : nct5104dctl [ --get|--set ] [--reg|--pin ] --id <registry>|<pin> --val <value> --dir <direction_for_gpio> \n"); 
+ printf("\n --id                : Takes hex value for registry and decimal value for pin \n"); 
+ printf("\n --val               : Takes vlaue to be written for pin/registry\n");
+ printf("\n --dir               : Direction of GPIO ( 1 => OUT ; 0 => IN) \n"); 
+ printf("\n Examples:\n");
+ printf("\n * Get a registry value: nct5104dctl --get --reg --id 0x07 \n");
+ 
 
 }
 
@@ -107,8 +111,24 @@ void get_registry(int fd, globalargs_t * globargs)
     }
     else
     {
-        printf("Registry : %d\n", q.registry);
-        printf("Value: %d\n", q.value);
+        printf("[{ \"registry\":\"0x%02x\",\"value\":%d}]\n", q.registry,q.value);
+    }
+}
+
+void set_registry(int fd, globalargs_t * globargs)
+{
+    nct5104dctl_arg_t s;
+
+    s.registry = globargs->id;
+    s.value    = globargs->value;
+
+    if (ioctl(fd, IOCTL_SET_REG, &s) == -1)
+    {
+        perror("nct5104dctl ioctl set");
+    }
+    else
+    {
+        printf("[{ \"registry\":\"0x%02x\",\"value\":%d}]\n", s.registry,s.value);
     }
 }
 
@@ -123,7 +143,7 @@ void getoptions(int argc, char ** argv, globalargs_t * globargs)
         { "reg",         no_argument,        NULL,    0},
         { "id",          required_argument,  NULL,    'i'},
         { "val",         required_argument,  NULL,    'v'},
-        { "dir",         required_argument,  NULL,    'd'},
+        { "dir",         required_argument,  NULL,    'd'},       
         { NULL,          no_argument,        NULL,    0 },
     };
 
@@ -132,7 +152,6 @@ void getoptions(int argc, char ** argv, globalargs_t * globargs)
                                             , "sgpri:v:d:"
                                             , long_options
                                             , &option_index) ) ) {
-        const char *tmp_optarg = optarg;
         switch( getopt_ret ) {
         case 0: 
             if( strcmp( "get", long_options[option_index].name ) == 0 ) {
@@ -156,10 +175,17 @@ void getoptions(int argc, char ** argv, globalargs_t * globargs)
             globargs->value = atoi(optarg);
             break;
         case 'i':
-            globargs->id = atoi(optarg);
+            /*--------  registry type selected  --------*/      
+            if(globargs->type == 0) {
+                globargs->id = convert_from_hex_string(optarg);
+            } 
+            /*--------  pin type selected  --------*/ 
+            if(globargs->type == 1) {
+                globargs->id = atoi(optarg);
+            } 
             break;
         case '?':
-            printf("Unknown option\n");
+            print_usage();
             break;
         default:
             printf( "Unknown: getopt_ret == %d\n", getopt_ret );
@@ -180,4 +206,48 @@ int open_file_dev(char * file_dev_name)
     }
 
     return fdevice;
+}
+
+int convert_from_hex_string(char * strhex)
+{
+    long val;
+    char *endptr;
+  
+    /*--------  convert from hex string  --------*/    
+    val = strtol(strhex, &endptr, 16);
+
+    if (endptr == strhex) 
+    {
+        return atoi(strhex); 
+    }
+    else
+    {
+        return (int) val; 
+    }
+}
+
+void print_debug(globalargs_t * globargs)
+{
+    /*--------  registry type selected  --------*/      
+    if(globargs->type == 0) {
+        printf("Type          : reg\n");
+        printf("ID            : 0x%02x\n", globargs->id); 
+    } 
+    /*--------  pin type selected  --------*/ 
+    if(globargs->type == 1) {
+        printf("Type          : pin\n");
+        printf("ID            : %d\n", globargs->id); 
+    } 
+
+    
+    /*--------  action get  --------*/    
+    if(globargs->action == 0) {
+        printf("Action        : get\n");
+    } 
+    /*--------  action set  --------*/    
+    if(globargs->action == 1) {
+        printf("Action        : set\n");
+    } 
+
+        printf("value         : %d\n",globargs->value);
 }
