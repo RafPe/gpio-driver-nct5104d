@@ -139,6 +139,7 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             }		
 
 			if( ( q_ctl.registry > 255) || (q_ctl.registry) < 0)  return -EINVAL;
+
 			nct5104d_writeb(q_ctl.registry,q_ctl.value );
 
 			printk(KERN_INFO "\nnct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_REG ");
@@ -149,7 +150,7 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
         default:
             return -EINVAL;
     }
- 
+	
     return 0;
 }
 
@@ -197,19 +198,19 @@ static int nct5104d_cdev_register(void)
 /*--------  Platform data/platform and driver  --------*/
 
 /* Reset the device. */
-static void nct5104d_gpio_get_pin(struct platform_data_ntc5104d* pdata,unsigned pin)
+static void nct5104d_gpio_get_pin(struct platform_data_nct5104d* pdata,unsigned pin)
 {
     printk(KERN_ALERT " %s\n", __FUNCTION__);
 }
 
 /* Reset the device. */
 //TODO -----> Write support for both GPIO ports at once!
-static void nct5104d_gpio_set_pin(struct platform_data_ntc5104d* pdata,unsigned pin,unsigned state)
+static void nct5104d_gpio_set_pin(struct platform_data_nct5104d* pdata,unsigned pin,unsigned state)
 {
     printk(KERN_ALERT " %s\n", __FUNCTION__);
 }
 
-static struct platform_data_ntc5104d device_pdata_ntc5104d = 
+static struct platform_data_nct5104d device_pdata_nct5104d = 
 {
  .chip_addr = NCT5104D_DEVICE_ADDR ,
  .num_gpio  = 16 ,
@@ -218,89 +219,79 @@ static struct platform_data_ntc5104d device_pdata_ntc5104d =
 };
 
 
-static struct platform_device device_pdevice_ntc5104d = 
+static struct platform_device device_pdevice_nct5104d = 
 {
         .name           = DRIVER_NAME,
         .id             = 0,
         // .num_resources  = ARRAY_SIZE(sample_resources),
         // .resource       = sample_resources,
 		.dev            = {
-			.platform_data	= &device_pdata_ntc5104d
+			.platform_data	= &device_pdata_nct5104d
 		},
 };
 
-static int ntc5104d_drv_probe(struct platform_device *pdev)
+static int nct5104d_drv_probe(struct platform_device *pdev)
 {
-	static int res,val;
+	static int res,val,err;
+	u16 devid;
+	u8 gpio_en;
 
-	struct platform_data_ntc5104d *pdata = dev_get_platdata(&pdev->dev);
+	struct platform_data_nct5104d *pdata = dev_get_platdata(&pdev->dev);
+
+	err = nct5104d_efm_enable();
+	if (err)
+		return err;
+
+	err = -ENODEV;
+
+	devid = nct5104d_readw(NCT5104D_REG_CHIPID);
+
+	switch (devid) 
+	{
+		case NCT5104D_ID:
+			printk(KERN_ALERT "nct5104d_gpio: Found device with chip ID (Nuvo)  : 0x%02x\n",devid);
+			nct5104d_soft_reset();
+			mdelay(50);
+			break;
+		case NCT5104D_ID_APU:
+			printk(KERN_ALERT "nct5104d_gpio: Found device with chip ID (APU)   : 0x%02x\n",devid);
+			nct5104d_soft_reset();
+			mdelay(50);
+			
+			/*--------  enable GPIO ports  --------*/
+			nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+			
+			gpio_en = nct5104d_readb(NCT5104D_REG_GPIOEN);
+			gpio_en |= ( NCT5104D_GPIO0_EN | NCT5104D_GPIO1_EN );
+
+			nct5104d_writeb(NCT5104D_REG_GPIOEN, gpio_en);
+
+			printk(KERN_ALERT "nct5104d_gpio: Enabled GPIO ports               : 0x%02x\n",gpio_en);
+			break;
+		default:
+			printk(KERN_ALERT "nct5104d_gpio: Unsupported device 0x%04x\n", devid);
+	}
+
+	err=0;
 
 	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%02x\n",pdata->chip_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",gpio_access_addr);
 	
-	nct5104d_soft_reset();
-    mdelay(50);
-
-   	res = nct5104d_efm_enable();
-	if (res)
-		return res; 
-	printk(KERN_ALERT "nct5104d_gpio: EFM is now enabled ... \n");
-
-
-	/**
-	*
-	* This part is responsible for configuration
-	* of direct GPIO access 
-	*/
-	val = 0;
-	val = nct5104d_get_logical_device();
-	printk(KERN_ALERT "nct5104d_gpio: Currently selected logical device 0x%04x\n",val);
-
-	nct5104d_select_logical_device(NCT5104D_LDEVICE_8);
-	printk(KERN_ALERT "nct5104d_gpio: Switched logical device ... \n");
-
-	val = 0;
-	val = nct5104d_get_logical_device();
-	printk(KERN_ALERT "nct5104d_gpio: Currently selected logical device 0x%04x\n",val);
-
-	//TODO implement proper address config with 16byte
-	nct5104d_writeb(NCT5104D_REG_GPIO_BASEADDR_L,gpio_access_addr);
-	val = nct5104d_readw(NCT5104D_REG_GPIO_BASEADDR_H);
-	printk(KERN_ALERT "nct5104d_gpio: DGA base configured to 0x%04x\n",val);
-
-
-
-	// Select GPIO1 & set all to output
-	nct5104d_writeb(NCT5104D_DGA_GSR, 1);
-	nct5104d_writeb(NCT5104D_DGA_IO,255);
-
-	// read current data state 
-    val = 0;
-	val = nct5104d_readb(NCT5104D_DGA_DATA);
-	printk(KERN_ALERT "nct5104d_gpio: DGA[1] data is  0x%02x\n",val);
-	
-	// write 255 to all pins 
-	nct5104d_writeb(NCT5104D_DGA_DATA,255);
-
-	// read current data state 
-    val = 0;
-	val = nct5104d_readb(NCT5104D_DGA_DATA);
-	printk(KERN_ALERT "nct5104d_gpio: DGA[1] data is now....  0x%02x\n",val);
-
-
-
+err:
+	nct5104d_efm_disable();
 	return 0;
+	
 }
 
-static int ntc5104d_drv_remove(struct platform_device *pdev)
+static int nct5104d_drv_remove(struct platform_device *pdev)
 {
 	return 0;
 }
 
-static struct platform_driver ntc5104d_pldriver = {
-    .probe          = ntc5104d_drv_probe,
-    .remove         = ntc5104d_drv_remove,
+static struct platform_driver nct5104d_pldriver = {
+    .probe          = nct5104d_drv_probe,
+    .remove         = nct5104d_drv_remove,
     .driver = {
             .name  = DRIVER_NAME,
 			.owner = THIS_MODULE,
@@ -312,7 +303,7 @@ static struct platform_driver ntc5104d_pldriver = {
 void __init nct5104d_init_platform_data(void)
 {
     /* Register "nct5104d platform device" with the OS. */
-	platform_device_register(&device_pdevice_ntc5104d);
+	platform_device_register(&device_pdevice_nct5104d);
 
 
 	//TODO - implement the following registration for platform device
@@ -348,7 +339,7 @@ static int __init nct5104d_driver_init(void)
 	nct5104d_init_platform_data();
 	printk(KERN_ALERT "nct5104d_gpio: Succesfuly registered platform device\n");
 
-	platform_driver_probe(&ntc5104d_pldriver, ntc5104d_drv_probe);
+	platform_driver_probe(&nct5104d_pldriver, nct5104d_drv_probe);
 
     return 0;
 }
@@ -363,8 +354,8 @@ static void __exit nct5104d_driver_exit(void)
 	class_destroy(cl);                             // remove the device class
 	unregister_chrdev(majorNumber, DRIVER_NAME);             // unregister the major number
 
-	platform_driver_unregister(&ntc5104d_pldriver);
-	platform_device_unregister(&device_pdevice_ntc5104d);
+	platform_driver_unregister(&nct5104d_pldriver);
+	platform_device_unregister(&device_pdevice_nct5104d);
 
 	mutex_destroy(&nct5104d_mutex);        /// destroy the dynamically-allocated mutex
     return;

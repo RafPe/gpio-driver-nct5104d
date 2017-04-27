@@ -6,11 +6,21 @@
 
 #define NCT5104D_REG_SOFT_RESET     	0x02
 #define NCT5104D_REG_LDEVICE     		0x07	
+#define NCT5104D_REG_CHIPID		        0x20	/* 2 bytes */
+#define NCT5104D_REG_GPIOEN     		0x30
 #define NCT5104D_REG_GPIO_BASEADDR_H    0x60
 #define NCT5104D_REG_GPIO_BASEADDR_L    0x61
 
 #define NCT5104D_LDEVICE_GPIO    		0x07
 #define NCT5104D_LDEVICE_8      		0x08
+
+
+
+#define NCT5104D_GPIO0_EN               0x01
+#define NCT5104D_GPIO1_EN               0x02
+
+#define NCT5104D_ID					    0x1061	
+#define NCT5104D_ID_APU         	    0xc452
 
 
 /*--------  extended function mode  --------*/
@@ -60,9 +70,9 @@ typedef enum {
 } gpio_dir_e ;
 
 
-struct platform_data_ntc5104d {
+struct platform_data_nct5104d {
  int chip_addr;
  int num_gpio;
- void (*set_pin)(struct platform_data_ntc5104d* pdata,unsigned pin,unsigned state);
- void (*get_pin)(struct platform_data_ntc5104d* pdata,unsigned pin);
+ void (*set_pin)(struct platform_data_nct5104d* pdata,unsigned pin,unsigned state);
+ void (*get_pin)(struct platform_data_nct5104d* pdata,unsigned pin);
 };
