@@ -49,17 +49,16 @@ typedef struct
 #define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
 #define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
 
+typedef enum {
+    GPIO_HIGH,
+    GPIO_LOW
+} gpio_status_e;
 
+typedef enum {
+    GPIO_IN,
+    GPIO_OUT
+} gpio_dir_e ;
 
-enum nct5104d_gpio_status {
-    nct5104d_GPIO_HIGH,
-    nct5104d_GPIO_LOW
-};
-
-enum nct5104d_gpio_dir {
-    nct5104d_GPIO_IN,
-    nct5104d_GPIO_OUT
-};
 
 struct platform_data_ntc5104d {
  int chip_addr;

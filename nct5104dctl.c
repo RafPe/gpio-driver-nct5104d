@@ -12,21 +12,13 @@
 /*--------  Include for types and ioctl  --------*/
 #include "nct5104d_gpio.h"
 
-enum gpio_status_e {
-    GPIO_HIGH,
-    GPIO_LOW
-};
-
-enum gpio_dir_e {
-    GPIO_IN,
-    GPIO_OUT
-};
+#define NCT5104D_FILE_DEVICE "/dev/nct5104d_gpio" 
 
 /**
  *
  * This structure defines our behaviour from options we receive.
  *
- * @type: 0-> registry ; 1->gpio 
+ * @type: 0-> registry ; 1->pin 
  * @action: 0 -> get (Default ) ; 1 -> set; 
  * @id: which registry/pin to target with our action
  * @value: what value to write to our target
@@ -34,138 +26,55 @@ enum gpio_dir_e {
  */
 typedef struct
 {
-    unsigned type;
-    unsigned action; 
-    unsigned id;
+    int type;
+    int action; 
+    int id;
     unsigned value;
-    gpio_dir_e gpio_dir;
+    unsigned gpio_dir;
 
 } globalargs_t;
 
-nct5104dctl_arg_t q;
+globalargs_t globalargs;
 
-void get_vars(int fd);
+void get_registry(int fd, globalargs_t * globargs);
 void print_usage();
+void getoptions(int argc, char ** argv, globalargs_t * globargs);
+int open_file_dev(char * file_dev_name);
 
  
 int main(int argc, char *argv[])
 {
     int ch;
     int fd ,option = 0 ,indexptr = 0;
-    char c, *endptr, *str, *file_name = "/dev/nct5104d_gpio";
+    char c, *endptr, *str, *file_name = NCT5104D_FILE_DEVICE;
     long val;
-    int getopt_ret;
-    int option_index;
 
-    static struct option long_options[] = {
-          { "set-pin", required_argument, NULL, 0},
-          { "get-pin", required_argument, NULL, 0},        
-          { "set-reg", required_argument, NULL, 0},
-          { "get-reg", required_argument, NULL, 0},
-          {0, 0, 0, 0}
-    };
+    
+    /*--------  default init  --------*/    
+    globalargs.type = -1;
+    globalargs.action = -1;
+    globalargs.id = -1;
+    globalargs.value =0;
+    globalargs.gpio_dir = 0;
 
-    while( -1 != ( getopt_ret = getopt_long(  argc
-                                            , argv
-                                            , "cgr:a::"
-                                            , long_options
-                                            , &option_index) ) ) {
-        const char *tmp_optarg = optarg;
-        switch( getopt_ret ) {
-        case 0: if( strcmp( "config", long_options[option_index].name ) == 0 ) {
-                    printf( "You config\n" );
-                }
-                if( strcmp( "gpio", long_options[option_index].name ) == 0 ) {
-                    printf( "You gpio\n" );
-                } 
-                break;
-        case 1:
-            // handle non-option arguments here if you put a `-`
-            // at the beginning of getopt_long's 3rd argument
-            break;
-        case 'r':
-            printf("Kudos to %s\n", optarg); break;
-        case 'a':
-            if(   !optarg
-            && NULL != argv[option_index]
-            && '-' != argv[option_index][0] ) 
-            {
-                // This is what makes it work; if `optarg` isn't set
-                // and argv[optindex] doesn't look like another option,
-                // then assume it's our parameter and overtly modify optindex
-                // to compensate.
-                //
-                // I'm not terribly fond of how this is done in the getopt
-                // API, but if you look at the man page it documents the
-                // existence of `optarg`, `optindex`, etc, and they're
-                // not marked const -- implying they expect and intend you
-                // to modify them if needed.
-                tmp_optarg = argv[option_index++];
-            }
-            printf( "You suck" );
-            if (tmp_optarg) 
-            {
-                printf (", %s!\n", tmp_optarg);
-            } 
-            else 
-            {
-                printf ("!\n");
-            }
-            break;
-        case '?':
-            printf("Unknown option\n");
-            break;
-        default:
-            printf( "Unknown: getopt_ret == %d\n", getopt_ret );
-            break;
-        }
+    
+    getoptions( argc,  argv, &globalargs);
+
+    printf("Type to %d\n", globalargs.type);
+    printf("Action to %d\n", globalargs.action);  
+    printf("ID to %d\n", globalargs.id); 
+    printf("value to %d\n", globalargs.value); 
+
+    fd = open_file_dev(file_name);
+
+    
+    /*--------  selected get / registry with valid id  --------*/    
+    if(globalargs.action == 0 && globalargs.type == 0 && globalargs.id >= 0 && globalargs.id <= 255)
+    {
+        get_registry(fd, &globalargs);
     }
 
-    // q.registry = -1;
-    // q.value = 0;
-
-
-    // while ((c = getopt_long(argc, argv, "gr:v:",long_options, &indexptr)) != -1){
-    // //while ((c = getopt(argc, argv,"a:r:v:")) != -1) {
-    //     switch (c) {
-    //          case 'g' :   
-    //                                                     option = 0;
-    //                             printf("setup option to be get\n");      
-    //                     // if (strcmp(optarg, "get") == 0)
-    //                     //     {
-    //                     //         option = 0;
-    //                     //         printf("setup option to be get\n");
-    //                     //     }
-    //                     //     else
-    //                     //     {
-    //                     //         option = 1;
-    //                     //         printf("setup option to be set\n");
-    //                     //     }
-    //                         break;
-    //          case 'r' : val = strtol(optarg, &endptr, 16); // convert from hex string  i.e. 0x01
-    //                     if (endptr == optarg) {
-    //                         q.registry = atoi(optarg); 
-    //                     }
-    //                     else
-    //                     {
-    //                         q.registry = (int) val; // TODO Check for conversion error!
-    //                     }
-                         
-    //              break;
-    //          case 'v' : val = strtol(optarg, &endptr, 16); // convert from hex string  i.e. 0x01
-    //                     if (endptr == optarg) {
-    //                         q.value = atoi(optarg); 
-    //                     }
-    //                     else
-    //                     {
-    //                         q.value = (int) val; // TODO Check for conversion error!
-    //                     }
-    //              break;
-    //          default: print_usage(); 
-    //              exit(EXIT_FAILURE);
-    //     }
-    // }
-
+    close (fd);
 
     // if (q.registry < 1) {
     //     printf("sregistry not detected: %d \n",q.registry );     
@@ -173,24 +82,6 @@ int main(int argc, char *argv[])
     //     exit(EXIT_FAILURE);
     // }
 
-    // fd = open(file_name, O_RDWR);
-    // if (fd == -1)
-    // {
-    //     perror("nct5104dctl open");
-    //     return 2;
-    // }
-
-    // if (option == 0) 
-    // {
-    //      get_vars(fd);
-    // }
-    // else if (option == 1) 
-    // {
-    //     get_vars(fd);
-    // }
-
-    // close (fd);
- 
     return 0;
 }
 
@@ -203,9 +94,13 @@ void print_usage()
 
 }
 
-
-void get_vars(int fd)
+void get_registry(int fd, globalargs_t * globargs)
 {
+    nct5104dctl_arg_t q;
+
+    q.registry = globargs->id;
+    q.value    = 0;
+
     if (ioctl(fd, IOCTL_GET_REG, &q) == -1)
     {
         perror("nct5104dctl ioctl get");
@@ -217,88 +112,72 @@ void get_vars(int fd)
     }
 }
 
+void getoptions(int argc, char ** argv, globalargs_t * globargs)
+{
+    int option_index;
+    int getopt_ret;
+    static struct option long_options[] = {
+        { "set",         no_argument,        NULL,    0},
+        { "get",         no_argument,        NULL,    0},
+        { "pin",         no_argument,        NULL,    0},
+        { "reg",         no_argument,        NULL,    0},
+        { "id",          required_argument,  NULL,    'i'},
+        { "val",         required_argument,  NULL,    'v'},
+        { "dir",         required_argument,  NULL,    'd'},
+        { NULL,          no_argument,        NULL,    0 },
+    };
 
-// //http://stackoverflow.com/questions/11867636/c-getopt-wrong-argument-corresponding-to-its-option
-// void getoptions (int argc, char **argv, globalargs_t* globalargs) 
-// {
+    while( -1 != ( getopt_ret = getopt_long(  argc
+                                            , argv
+                                            , "sgpri:v:d:"
+                                            , long_options
+                                            , &option_index) ) ) {
+        const char *tmp_optarg = optarg;
+        switch( getopt_ret ) {
+        case 0: 
+            if( strcmp( "get", long_options[option_index].name ) == 0 ) {
+                globargs->action = 0;
+            }
+            if( strcmp( "set", long_options[option_index].name ) == 0 ) {
+                globargs->action = 1;
+            } 
+            if( strcmp( "pin", long_options[option_index].name ) == 0 ) {
+                globargs->type = 1;
+            }
+            if( strcmp( "reg", long_options[option_index].name ) == 0 ) {
+                globargs->type = 0;
+            } 
+            break;
+        case 1:
+            // handle non-option arguments here if you put a `-`
+            // at the beginning of getopt_long's 3rd argument
+            break;
+        case 'v':
+            globargs->value = atoi(optarg);
+            break;
+        case 'i':
+            globargs->id = atoi(optarg);
+            break;
+        case '?':
+            printf("Unknown option\n");
+            break;
+        default:
+            printf( "Unknown: getopt_ret == %d\n", getopt_ret );
+            break;
+        }
+    }
 
-//     static const char *optstring = "vDqnd:c:f:o:h?:";
+}
 
-//     static const struct option longopts[] = {
-//         { "config",      no_argument,        NULL,    0},
-//         { "gpio",        no_argument,        NULL,    0},
-//         { "verbose",    no_argument,        NULL,    'v'},
-//         { "quiet",        no_argument,        NULL,    'q'},
-//         { "noheader",    no_argument,        NULL,    0},
-//         { "delimiter",    required_argument,     NULL,    0},
-//         { "columns",    required_argument,    NULL,    0},
-//         { "filter",        required_argument,    NULL,    0},
-//         { "order",        required_argument,    NULL,    0},
-//         { "getid",        no_argument,        NULL,    'i'},
-//         { NULL,            no_argument,        NULL,    0 }
-//     };
+int open_file_dev(char * file_dev_name)
+{
+    int fdevice;
+    fdevice = open(file_dev_name, O_RDWR);
+    if (fdevice == -1)
+    {
+        perror("nct5104dctl open");
+        return 2;
+    }
 
-//     int opt = 0;
-//     int longindex = 0;
-//     //opterr = 0;
-
-//     /* Process the arguments with getopt_long(), then populate globalargs-> */
-//     opt = getopt_long( argc, argv, optstring, longopts, &longindex );
-//     while( opt != -1 ) {
-//         switch( opt ) {
-//             case '?':
-//                 break;
-//             case 'D':
-//                 globalargs->debug = 1;    /* true */
-//                 break;
-//             case 'v':
-//                 globalargs->verbose++;
-//                 break;
-//             case 'q':
-//                 globalargs->quiet = 1;
-//                 break;
-//             case 'i':
-//                 globalargs->id = 1;
-//                 break;
-//             case 'h':
-//                 globalargs->help = 1;
-//                 break;
-//             case 0:        /* long option without a short arg */
-//                 if( strcmp( "Debug", longopts[longindex].name ) == 0 ) {
-//                     globalargs->debug = 1;
-//                 }
-//                 if( strcmp( "verbose", longopts[longindex].name ) == 0 ) {
-//                     globalargs->verbose = 1;
-//                 }
-//                 if( strcmp( "quiet", longopts[longindex].name ) == 0 ) {
-//                     globalargs->quiet = 1;
-//                 }
-//                 if( strcmp( "noheader", longopts[longindex].name ) == 0 ) {
-//                     globalargs->noheader = 1;
-//                 }
-//                 if( strcmp( "delimiter", longopts[longindex].name ) == 0 ) {
-//                     globalargs->delimiter = *optarg;
-//                 }
-//                 if( strcmp( "filter", longopts[longindex].name ) == 0 ) {
-//                     globalargs->filter = optarg;
-//                 }
-//                 if( strcmp( "order", longopts[longindex].name ) == 0 ) {
-//                     globalargs->order = optarg;
-//                 }
-//                 if( strcmp( "columns", longopts[longindex].name ) == 0 ) {
-//                     globalargs->columns = optarg;
-//                 }
-//                 break;
-//             default:
-//                 /* You won't actually get here. */
-//                 break;
-//         }
-//         opt = getopt_long( argc, argv, optstring, longopts, &longindex );
-//     }
-//     if (optind < argc) {
-//         while (optind < argc) {
-//             globalargs->actions[globalargs->actionsindex] = argv[optind++];
-//             globalargs->actionsindex++;
-//         }
-//     }
-// }
+    return fdevice;
+}
