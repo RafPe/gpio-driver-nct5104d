@@ -6,22 +6,31 @@
 
 #define NCT5104D_REG_SOFT_RESET     	0x02
 #define NCT5104D_REG_LDEVICE     		0x07	
+    #define NCT5104D_LDEVICE_GPIO    		0x07
+    #define NCT5104D_LDEVICE_8      		0x08
 #define NCT5104D_REG_CHIPID		        0x20	/* 2 bytes */
 #define NCT5104D_REG_GPIOEN     		0x30
+    #define NCT5104D_GPIO0_EN               0x01
+    #define NCT5104D_GPIO1_EN               0x02
 #define NCT5104D_REG_GPIO_BASEADDR_H    0x60
 #define NCT5104D_REG_GPIO_BASEADDR_L    0x61
 
-#define NCT5104D_LDEVICE_GPIO    		0x07
-#define NCT5104D_LDEVICE_8      		0x08
 
+/*--------  GPIO0  --------*/
+#define NCT5104D_REG_GPIO0_IO                0xE0                    /* input or output */
+#define NCT5104D_REG_GPIO0_DATA              0xE1                    /* set pin state */
+#define NCT5104D_REG_GPIO0_INVERSION         0xE2                   
+#define NCT5104D_REG_GPIO0_STATUS            0xE3                     /* active edge detection */
 
+/*--------  GPIO1  --------*/
+#define NCT5104D_REG_GPIO1_IO                0xE4                    /* input or output */
+#define NCT5104D_REG_GPIO1_DATA              0xE5                    /* set pin state */
+#define NCT5104D_REG_GPIO1_INVERSION         0xE6                   
+#define NCT5104D_REG_GPIO1_STATUS            0xE7                     /* active edge detection */
 
-#define NCT5104D_GPIO0_EN               0x01
-#define NCT5104D_GPIO1_EN               0x02
-
+/*--------  chip IDs  --------*/
 #define NCT5104D_ID					    0x1061	
 #define NCT5104D_ID_APU         	    0xc452
-
 
 /*--------  extended function mode  --------*/
 #define NCT5104D_EFM_ENABLE	    	    0x87	
@@ -73,6 +82,6 @@ typedef enum {
 struct platform_data_nct5104d {
  int chip_addr;
  int num_gpio;
- void (*set_pin)(struct platform_data_nct5104d* pdata,unsigned pin,unsigned state);
- void (*get_pin)(struct platform_data_nct5104d* pdata,unsigned pin);
+//  void (*set_pin)(struct platform_data_nct5104d* pdata,unsigned pin,unsigned state);
+//  void (*get_pin)(struct platform_data_nct5104d* pdata,unsigned pin);
 };

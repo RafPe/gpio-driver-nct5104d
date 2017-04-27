@@ -90,6 +90,28 @@ static inline void nct5104d_soft_reset(void)
 	nct5104d_writeb(NCT5104D_REG_SOFT_RESET, 1);
 }
 
+/* Reset the device. */
+static void nct5104d_gpio_get_pin(unsigned pin)
+{
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] pin cmd     => %s ",__FUNCTION__);
+}
+
+/* Reset the device. */
+//TODO -----> Write support for both GPIO ports at once!
+static void nct5104d_gpio_set_pin(unsigned pin,unsigned state)
+{
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] pin cmd     => %s ",__FUNCTION__);
+
+	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+	nct5104d_writeb(NCT5104D_REG_GPIO0_IO,0); // ALL 0 == ALL OUT
+	nct5104d_writeb(NCT5104D_REG_GPIO1_IO,0); // ALL 0 == ALL OUT
+
+	nct5104d_writeb(NCT5104D_REG_GPIO0_DATA,255); // ALL 0 == ALL OUT
+	nct5104d_writeb(NCT5104D_REG_GPIO1_DATA,255); // ALL 0 == ALL OUT
+
+}
+
+
 
 /*--------  Character device  --------*/
 static int nct5104d_cdev_open(struct inode *i, struct file *f)
@@ -110,8 +132,17 @@ static int nct5104d_cdev_close(struct inode *i, struct file *f)
 
 static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
+	int err;
+
     gpio_arg_t q_gpio;
     nct5104dctl_arg_t q_ctl;
+
+
+	
+	/*--------  enable EFM for all interactions  --------*/	
+	err = nct5104d_efm_enable();
+	if (err)
+		return err;
 
     switch (cmd)
     {
@@ -123,7 +154,8 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 
 			if( ( q_ctl.registry > 255) || (q_ctl.registry) < 0)  return -EINVAL;
 			q_ctl.value = nct5104d_readb(q_ctl.registry);
-			printk(KERN_INFO "\nnct5104d_gpio: [DEBUG] received cmd     => IOCTL_GET_REG ");
+
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_GET_REG ");
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Query registry   => 0x%02x\n", q_ctl.registry);
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Return value is  => %d\n", q_ctl.value);
 
@@ -142,16 +174,24 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 
 			nct5104d_writeb(q_ctl.registry,q_ctl.value );
 
-			printk(KERN_INFO "\nnct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_REG ");
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_REG ");
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Query registry   => 0x%02x\n", q_ctl.registry);
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Return value is  => %d\n", q_ctl.value);
 
             break;
+        case IOCTL_SET_PIN:
+
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_PIN ");
+
+			nct5104d_gpio_set_pin(1,1);
+
+            break;			
         default:
             return -EINVAL;
     }
-	
-    return 0;
+
+	nct5104d_efm_disable();
+    return err;
 }
 
 static struct file_operations nct5104d_driver_fops = 
@@ -197,25 +237,10 @@ static int nct5104d_cdev_register(void)
 
 /*--------  Platform data/platform and driver  --------*/
 
-/* Reset the device. */
-static void nct5104d_gpio_get_pin(struct platform_data_nct5104d* pdata,unsigned pin)
-{
-    printk(KERN_ALERT " %s\n", __FUNCTION__);
-}
-
-/* Reset the device. */
-//TODO -----> Write support for both GPIO ports at once!
-static void nct5104d_gpio_set_pin(struct platform_data_nct5104d* pdata,unsigned pin,unsigned state)
-{
-    printk(KERN_ALERT " %s\n", __FUNCTION__);
-}
-
 static struct platform_data_nct5104d device_pdata_nct5104d = 
 {
  .chip_addr = NCT5104D_DEVICE_ADDR ,
  .num_gpio  = 16 ,
- .get_pin = nct5104d_gpio_get_pin ,
- .set_pin = nct5104d_gpio_set_pin ,
 };
 
 
@@ -249,19 +274,18 @@ static int nct5104d_drv_probe(struct platform_device *pdev)
 	switch (devid) 
 	{
 		case NCT5104D_ID:
-			printk(KERN_ALERT "nct5104d_gpio: Found device with chip ID (Nuvo)  : 0x%02x\n",devid);
-			nct5104d_soft_reset();
-			mdelay(50);
+			printk(KERN_ALERT "nct5104d_gpio: Found device with chip ID (Nuvo) : 0x%02x\n",devid);
 			break;
 		case NCT5104D_ID_APU:
-			printk(KERN_ALERT "nct5104d_gpio: Found device with chip ID (APU)   : 0x%02x\n",devid);
-			nct5104d_soft_reset();
-			mdelay(50);
+			printk(KERN_ALERT "nct5104d_gpio: Found device with chip ID (APU)  : 0x%02x\n",devid);
+
 			
 			/*--------  enable GPIO ports  --------*/
 			nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 			
 			gpio_en = nct5104d_readb(NCT5104D_REG_GPIOEN);
+			printk(KERN_ALERT "nct5104d_gpio: GPIO ports config                : 0x%02x\n",gpio_en);
+
 			gpio_en |= ( NCT5104D_GPIO0_EN | NCT5104D_GPIO1_EN );
 
 			nct5104d_writeb(NCT5104D_REG_GPIOEN, gpio_en);
@@ -272,15 +296,15 @@ static int nct5104d_drv_probe(struct platform_device *pdev)
 			printk(KERN_ALERT "nct5104d_gpio: Unsupported device 0x%04x\n", devid);
 	}
 
-	err=0;
+	err = 0;
 
 	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%02x\n",pdata->chip_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",gpio_access_addr);
 	
-err:
+
 	nct5104d_efm_disable();
-	return 0;
+	return err;
 	
 }
 

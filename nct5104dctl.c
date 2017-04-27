@@ -38,6 +38,7 @@ globalargs_t globalargs;
 
 void get_registry(int fd, globalargs_t * globargs);
 void set_registry(int fd, globalargs_t * globargs);
+void set_pin(int fd, globalargs_t * globargs);
 
 int convert_from_hex_string(char * strhex);
 void print_debug(globalargs_t * globargs);
@@ -78,6 +79,12 @@ int main(int argc, char *argv[])
     if(globalargs.action == 1 && globalargs.type == 0 && globalargs.id >= 0 && globalargs.id <= 255)
     {
         set_registry(fd, &globalargs);
+    }
+
+    /*--------  selected set / pin with valid id  --------*/  
+    if(globalargs.action == 1 && globalargs.type == 1 && globalargs.id >= 0 && globalargs.id <= 255)
+    {
+        set_pin(fd, &globalargs);
     }
 
     close (fd);
@@ -135,6 +142,24 @@ void set_registry(int fd, globalargs_t * globargs)
     else
     {
         printf("[{ \"registry\":\"0x%02x\",\"value\":%d}]\n", s.registry,s.value);
+    }
+}
+
+void set_pin(int fd, globalargs_t * globargs)
+{
+    gpio_arg_t s;
+
+    s.pin = 1;
+    s.direction =1;
+    s.state = 1;
+
+    if (ioctl(fd, IOCTL_SET_PIN, &s) == -1)
+    {
+        perror("nct5104dctl ioctl set");
+    }
+    else
+    {
+        printf("[{ \"registry\":\"0x%02x\",\"value\":%d}]\n", 6,6);
     }
 }
 
