@@ -68,10 +68,16 @@ int main(int argc, char *argv[])
 
     fd = open_file_dev(file_name);
 
-        /*--------  selected get / registry with valid id  --------*/    
+    /*--------  selected get / registry with valid id  --------*/    
     if(globalargs.action == 0 && globalargs.type == 0 && globalargs.id >= 0 && globalargs.id <= 255)
     {
         get_registry(fd, &globalargs);
+    }
+
+    /*--------  selected set / registry with valid id  --------*/  
+    if(globalargs.action == 1 && globalargs.type == 0 && globalargs.id >= 0 && globalargs.id <= 255)
+    {
+        set_registry(fd, &globalargs);
     }
 
     close (fd);

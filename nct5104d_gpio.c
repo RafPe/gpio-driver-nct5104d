@@ -113,8 +113,6 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
     gpio_arg_t q_gpio;
     nct5104dctl_arg_t q_ctl;
 
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd => %d\n", cmd);
-
     switch (cmd)
     {
         case IOCTL_GET_REG:
@@ -125,9 +123,9 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 
 			if( ( q_ctl.registry > 255) || (q_ctl.registry) < 0)  return -EINVAL;
 			q_ctl.value = nct5104d_readb(q_ctl.registry);
-
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] registry is  => %d\n", q_ctl.registry);
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] value is  => %d\n", q_ctl.value);
+			printk(KERN_INFO "\nnct5104d_gpio: [DEBUG] received cmd     => IOCTL_GET_REG ");
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Query registry   => 0x%02x\n", q_ctl.registry);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Return value is  => %d\n", q_ctl.value);
 
             if (copy_to_user((nct5104dctl_arg_t *)arg, &q_ctl, sizeof(nct5104dctl_arg_t)))
             {
@@ -143,18 +141,11 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 			if( ( q_ctl.registry > 255) || (q_ctl.registry) < 0)  return -EINVAL;
 			nct5104d_writeb(q_ctl.registry,q_ctl.value );
 
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] registry is  => %d\n", q_ctl.registry);
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] value is  => %d\n", q_ctl.value);
+			printk(KERN_INFO "\nnct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_REG ");
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Query registry   => 0x%02x\n", q_ctl.registry);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Return value is  => %d\n", q_ctl.value);
+
             break;
-        // case QUERY_SET_VARIABLES:
-        //     if (copy_from_user(&q, (query_arg_t *)arg, sizeof(query_arg_t)))
-        //     {
-        //         return -EACCES;
-        //     }
-        //     status = q.status;
-        //     dignity = q.dignity;
-        //     ego = q.ego;
-        //     break;
         default:
             return -EINVAL;
     }
