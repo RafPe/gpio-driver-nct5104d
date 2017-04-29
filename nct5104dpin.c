@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     if(globalargs.action == e_pin_set   \
     && (globalargs.pin >= 0)    \
     && (globalargs.pin < 16)   \
-    && (globalargs.value == 0 | globalargs.value == 1)
+    && (globalargs.value == 0 || globalargs.value == 1) )
     {
         set_pin(fd, &globalargs);
     }

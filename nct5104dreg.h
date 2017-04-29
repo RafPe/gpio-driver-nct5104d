@@ -1,3 +1,14 @@
+typedef enum {
+    e_reg_get,
+    e_reg_set,
+} e_reg_action_t;
+
+typedef struct {
+    e_reg_action_t      action; 
+    int                 reg;
+    unsigned            value;
+} globalargs_t;
+
 typedef struct {
     unsigned pin;
     unsigned direction;
