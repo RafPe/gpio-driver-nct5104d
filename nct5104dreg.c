@@ -10,7 +10,7 @@
  
 
 /*--------  Include for types and ioctl  --------*/
-#include "nct5104dctl.h"
+#include "nct5104dreg.h"
 
 #define NCT5104D_FILE_DEVICE "/dev/nct5104d_gpio" 
 
