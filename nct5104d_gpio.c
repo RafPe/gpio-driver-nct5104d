@@ -116,121 +116,93 @@ static inline void nct5104d_select_logical_device(int ld){
 	nct5104d_writeb(NCT5104D_REG_LDEVICE, ld);
 }
 
-static inline int nct5104d_get_logical_device(void)
-{
+static inline int nct5104d_get_logical_device(void){
 	return nct5104d_readb(NCT5104D_REG_LDEVICE);
 }
 
-static inline void nct5104d_soft_reset(void)
-{
+static inline void nct5104d_soft_reset(void){
 	nct5104d_writeb(NCT5104D_REG_SOFT_RESET, 1);
 }
 
 
 /*--------  GPIO management  --------*/
 
-static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank ){
-	// u8 val;
+static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
+	
+	// static int val;
+
+	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
+	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
+	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
+	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
+	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
 
 	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	// /*--------  GPIO1 register[8:15]  --------*/
-	// if(pin > 7)
-	// {
-	// 	return nct5104d_readb(NCT5104D_REG_GPIO1_DATA);
-	// }
+	// val = nct5104d_readb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
+	
 
-	// /*--------  GPIO0 register[0:7]  --------*/
-	// if(pin < 8)
+	// return val;
+	// if (&gpioctl->direction)
 	// {
-	// 	return nct5104d_readb(NCT5104D_REG_GPIO0_DATA);
+	// 	val |= (1 << pin);
+	// }
+	// else
+	// {
+	// 	val &= ~(1 << pin);
 	// }
 }
 
 static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
+
+	static int val;
+
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
+
+	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+
+	val = nct5104d_readb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
 	
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG]  Hurrrrrraaaaa    => IOCTL_GET_REG ");
-				// &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_dir(&q_gpio); 
-			// &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_pin(&q_gpio); 
+	if (&gpioctl->direction)
+	{
+		val |= (1 << pin);
+	}
+	else
+	{
+		val &= ~(1 << pin);
+	}
 
-	// u8 val;
-
-	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
-
-	// /*--------  GPIO1 register[8:15]  --------*/
-	// if(pin > 7)
-	// {
-	// 	val = nct5104d_readb(NCT5104D_REG_GPIO1_DATA);
-		
-	// 	if (direction)
-	// 	{
-	// 		val |= (1 << pin);
-	// 	}
-	// 	else
-	// 	{
-	// 		val &= ~(1 << pin);
-	// 	}
-
-	// 	nct5104d_writeb(NCT5104D_REG_GPIO1_DATA,val); // ALL 0 == ALL OUT
-	// }
-
-	// /*--------  GPIO0 register[0:7]  --------*/
-	// if(pin < 8)
-	// {
-	// 	val = nct5104d_readb(NCT5104D_REG_GPIO0_DATA);
-
-	// 	if (direction)
-	// 	{
-	// 		val |= (1 << pin);
-	// 	}
-	// 	else
-	// 	{
-	// 		val &= ~(1 << pin);
-	// 	}
-
-	// 	nct5104d_writeb(NCT5104D_REG_GPIO0_DATA,val); // ALL 0 == ALL OUT
-	// }
+	nct5104d_writeb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA,val);
 }
 
 static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
-	// u8 val;
 
-	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+	static int val;
 
-	// /*--------  GPIO1 register[8:15]  --------*/
-	// if(pin > 7)
-	// {
-	// 	val = nct5104d_readb(NCT5104D_REG_GPIO1_IO);
-		
-	// 	if (direction)
-	// 	{
-	// 		val |= (1 << pin);
-	// 	}
-	// 	else
-	// 	{
-	// 		val &= ~(1 << pin);
-	// 	}
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
 
-	// 	nct5104d_writeb(NCT5104D_REG_GPIO1_IO,val); // ALL 0 == ALL OUT
-	// }
+	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	// /*--------  GPIO0 register[0:7]  --------*/
-	// if(pin < 8)
-	// {
-	// 	val = nct5104d_readb(NCT5104D_REG_GPIO0_IO);
+	val = nct5104d_readb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO);
+	
+	if (&gpioctl->direction)
+	{
+		val |= (1 << pin);
+	}
+	else
+	{
+		val &= ~(1 << pin);
+	}
 
-	// 	if (direction)
-	// 	{
-	// 		val |= (1 << pin);
-	// 	}
-	// 	else
-	// 	{
-	// 		val &= ~(1 << pin);
-	// 	}
-
-	// 	nct5104d_writeb(NCT5104D_REG_GPIO0_IO,val); // ALL 0 == ALL OUT
-	// }
-
+	nct5104d_writeb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO,val);
 }
 
 
@@ -259,7 +231,7 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
     gpio_arg_t q_gpio;
     nct5104dctl_arg_t q_ctl;
 
-
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
 	
 	/*--------  enable EFM for all interactions  --------*/	
 	err = nct5104d_efm_enable();
@@ -297,7 +269,7 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 			nct5104d_writeb(q_ctl.registry,q_ctl.value );
 
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_REG ");
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Query registry   => 0x%02x\n", q_ctl.registry);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Set registry     => 0x%02x\n", q_ctl.registry);
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] Return value is  => %d\n", q_ctl.value);
 
             break;
@@ -308,9 +280,7 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             }
 
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_PIN ");
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] calling function     => nct5104d_gpio_pin_set ");
 			nct5104d_gpio_pin_set(&q_gpio, &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]);
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] function done     => nct5104d_gpio_pin_set ");
 
             break;			
         default:

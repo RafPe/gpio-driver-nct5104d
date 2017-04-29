@@ -16,6 +16,12 @@
 #define NCT5104D_REG_GPIO_BASEADDR_L    0x61
 
 
+/*--------  GPIO OFFSETS  --------*/
+#define NCT5104D_GPIO_OFFSET_IO                0                    /* input or output */
+#define NCT5104D_GPIO_OFFSET_DATA              1                    /* set pin state */
+#define NCT5104D_GPIO_OFFSET_INVERSION         2                   
+#define NCT5104D_GPIO_OFFSET_STATUS            3                     /* active edge detection */
+
 /*--------  GPIO0  --------*/
 #define NCT5104D_REG_GPIO0_IO                0xE0                    /* input or output */
 #define NCT5104D_REG_GPIO0_DATA              0xE1                    /* set pin state */
