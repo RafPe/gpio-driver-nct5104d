@@ -113,7 +113,7 @@ static inline void nct5104d_efm_disable(void){
 	release_region(NCT5104D_DEVICE_ADDR, 2);
 }
 
-static inline void nct5104d_select_logical_device(int ld){
+static inline void nct5104d_select_logical_device(unsigned int  ld){
 	nct5104d_writeb(NCT5104D_REG_LDEVICE, ld);
 }
 
@@ -159,14 +159,14 @@ static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 	static int val;
 
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",gpiobank->id);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",gpiobank->regbase);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",gpioctl->pin);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",gpioctl->state);
 
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	val = nct5104d_readb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
+	val = nct5104d_readb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
 	
 	if (&gpioctl->direction)
 	{
@@ -177,7 +177,7 @@ static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 		val &= ~(1 << &gpioctl->pin);
 	}
 
-	nct5104d_writeb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA,val);
+	nct5104d_writeb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA,val);
 }
 
 static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
@@ -185,14 +185,14 @@ static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 	static int val;
 
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",gpiobank->id);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",gpiobank->regbase);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",gpioctl->pin);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",gpioctl->state);
 
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	val = nct5104d_readb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO);
+	val = nct5104d_readb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO);
 	
 	if (&gpioctl->direction)
 	{
@@ -203,7 +203,7 @@ static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 		val &= ~(1 << &gpioctl->pin);
 	}
 
-	nct5104d_writeb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO,val);
+	nct5104d_writeb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO,val);
 }
 
 

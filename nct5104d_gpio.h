@@ -106,7 +106,7 @@ static inline void          nct5104d_writeb(unsigned int  reg, unsigned val);
 static inline int       nct5104d_efm_enable(void);
 static inline void      nct5104d_efm_disable(void);
 
-static inline void      nct5104d_select_logical_device(int ld);
+static inline void      nct5104d_select_logical_device(unsigned int  ld);
 static inline int       nct5104d_get_logical_device(void);
 
 static inline void      nct5104d_soft_reset(void);
