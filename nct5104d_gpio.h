@@ -51,7 +51,6 @@
  typedef struct
 {
     int pin;
-    int state; 
     int direction;
 } gpio_arg_t;
  
@@ -85,3 +84,26 @@ struct platform_data_nct5104d {
 //  void (*set_pin)(struct platform_data_nct5104d* pdata,unsigned pin,unsigned state);
 //  void (*get_pin)(struct platform_data_nct5104d* pdata,unsigned pin);
 };
+
+
+static int nct5104d_readw(int reg);
+static inline int nct5104d_readb(int reg);
+static inline void nct5104d_writeb(int reg, unsigned val);
+static inline int nct5104d_efm_enable(void);
+static inline void nct5104d_efm_disable(void);
+static inline void nct5104d_efm_disable(void);
+static inline void nct5104d_select_logical_device(int ld);
+static inline int nct5104d_get_logical_device(void);
+static inline void nct5104d_soft_reset(void);
+static void nct5104d_gpio_get_pin(unsigned pin);
+static void nct5104d_gpio_set_pin(unsigned pin,unsigned state);
+static void nct5104d_gpio_set_pin_direction(unsigned pin,unsigned direction);
+static int nct5104d_cdev_open(struct inode *i, struct file *f);
+static int nct5104d_cdev_close(struct inode *i, struct file *f);
+static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg);
+static int nct5104d_cdev_register(void);
+static void nct5104d_device_release(struct device *dev);
+static int nct5104d_drv_probe(struct platform_device *pdev);
+static int nct5104d_drv_remove(struct platform_device *pdev);
+void __init nct5104d_init_platform_data(void);
+static void __exit nct5104d_driver_exit(void);
