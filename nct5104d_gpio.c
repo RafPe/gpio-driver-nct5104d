@@ -169,11 +169,11 @@ static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 	
 	if (&gpioctl->direction)
 	{
-		val |= (1 << pin);
+		val |= (1 << &gpioctl->pin);
 	}
 	else
 	{
-		val &= ~(1 << pin);
+		val &= ~(1 << &gpioctl->pin);
 	}
 
 	nct5104d_writeb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA,val);
@@ -195,11 +195,11 @@ static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 	
 	if (&gpioctl->direction)
 	{
-		val |= (1 << pin);
+		val |= (1 << &gpioctl->pin);
 	}
 	else
 	{
-		val &= ~(1 << pin);
+		val &= ~(1 << &gpioctl->pin);
 	}
 
 	nct5104d_writeb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO,val);
