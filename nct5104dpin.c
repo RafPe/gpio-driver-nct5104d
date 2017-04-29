@@ -74,6 +74,13 @@ int main(int argc, char *argv[])
         set_pin(fd, &globalargs);
     }
 
+    if(globalargs.action == e_pin_get   \
+    && (globalargs.pin >= 0)    \
+    && (globalargs.pin < 16))
+    {
+        get_pin(fd, &globalargs);
+    }
+
     close (fd);
 
     return 0;
@@ -82,12 +89,16 @@ int main(int argc, char *argv[])
 
 void print_usage() 
 {
- printf("\n Usage : nct5104dctl [ --get|--set ] [--reg|--pin ] --id <registry>|<pin> --val <value> --dir <direction_for_gpio> \n"); 
- printf("\n --id                : Takes hex value for registry and decimal value for pin \n"); 
- printf("\n --val               : Takes vlaue to be written for pin/registry\n");
- printf("\n --dir               : Direction of GPIO ( 1 => OUT ; 0 => IN) \n"); 
+ printf("\n Usage : nct5104dpin [ --get|--set ] [--pin ] --val < 0|1 > --dir <direction_for_gpio> \n"); 
+ printf("\n --pin               : Takes decimal value for pin \n"); 
+ printf("\n --val               : Takes value to be written for pin [0|1]\n");
+ printf("\n --dir               : Direction of GPIO ( 0 => OUT ; 1 => IN) \n"); 
+ printf("\n\n");
  printf("\n Examples:\n");
- printf("\n * Get a registry value: nct5104dctl --get --reg --id 0x07 \n");
+ printf("\n * Get a pin value: nct5104dpin --pin 7 \n");
+ printf("\n * Get a pin value: nct5104dpin --get --pin 14 \n");
+ printf("\n * Set a pin value: nct5104dpin --set --pin 14 --val 1 \n");
+ printf("\n * Set a pin direction: nct5104dpin --set --pin 14 --dir out \n");
  
 
 }
@@ -109,6 +120,25 @@ void set_pin(int fd, globalargs_t * globargs)
         printf("[{ \"pin\":%d,\"value\":%d}]\n", globargs->pin,globargs->value);
     }
 }
+
+void get_pin(int fd, globalargs_t * globargs)
+{
+    gpio_arg_t s;
+
+    s.pin       = globargs->pin;
+    s.direction = globargs->dir;
+    s.state     = globargs->value;
+
+    if (ioctl(fd, IOCTL_GET_PIN, &s) == -1)
+    {
+        perror("nct5104dctl ioctl get pin");
+    }
+    else
+    {
+        printf("[{ \"pin\":%d,\"value\":%d}]\n", globargs->pin,globargs->value);
+    }
+}
+
 
 void getoptions(int argc, char ** argv, globalargs_t * globargs)
 {

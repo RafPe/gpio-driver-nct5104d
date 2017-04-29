@@ -133,10 +133,10 @@ static unsigned int nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_ba
 	static unsigned int val;
 
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",gpiobank->id);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",gpiobank->regbase);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",gpioctl->pin);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",gpioctl->state);
 
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
