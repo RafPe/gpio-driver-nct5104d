@@ -56,7 +56,7 @@
 #define MINOR_CNT   1
 
 #define NCT5104D_BANK(A) ({unsigned retval=0; if (A > 7 ) retval =1; retval;})
-#define NCT5104D_PIN(A)  ({unsigned retval=0; if (A > 7 ) retval = A-8; retval;})
+#define NCT5104D_PIN(A)  ({unsigned retval=A; if (A > 7 ) retval = A-8; retval;})
 
 typedef struct {
     unsigned pin;
