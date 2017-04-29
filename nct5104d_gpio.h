@@ -87,14 +87,11 @@ struct platform_data_nct5104d {
  int num_gpio;
 };
 
-struct nct5104d_gpio_bank {
+typedef struct {
     unsigned int id;
 	unsigned int regbase;
     unsigned int num_gpio;
-    void (*set_pin)(gpio_arg_t * gpioctl);
-    void (*get_pin)(gpio_arg_t * gpioctl);
-    void (*set_dir)(gpio_arg_t * gpioctl);
-};
+} nct5104d_gpio_bank_t;
 
 static int nct5104d_readw(int reg);
 static inline int nct5104d_readb(int reg);
@@ -107,9 +104,9 @@ static inline int nct5104d_get_logical_device(void);
 static inline void nct5104d_soft_reset(void);
 
 
-static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl);
-static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl);
-static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl);
+static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
+static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
+static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
 
 static int nct5104d_cdev_open(struct inode *i, struct file *f);
 static int nct5104d_cdev_close(struct inode *i, struct file *f);

@@ -16,27 +16,25 @@
 
 static DEFINE_MUTEX(nct5104d_mutex);
 
-static int 		gpio_access_addr = NCT5104D_DGA_GSR ;
-static int    	majorNumber;                  
+static int 		gpio_access_addr 	= NCT5104D_DGA_GSR ;
+static int    	majorNumber;   
+static int		debug_enabled 		= 0;                
 
 static dev_t dev;
 static struct class *cl;
 
-// module_param(gpio_access_addr, int, 0644);
-// MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
+module_param(debug_enabled, int, 0644);
+MODULE_PARM_DESC(debug_enabled, "Enable driver debug");
 
 #define NCT5104D_GPIO_BANK(_id, _ngpio, _regbase)					\
 	{																\
-		.set_dir  				= nct5104d_gpio_dir_set,			\
-		.get_pin              	= nct5104d_gpio_pin_get,			\
-		.set_pin              	= nct5104d_gpio_pin_set,			\	
 		.num_gpio				= _ngpio,							\
 		.regbase 				= _regbase,							\
 		.id 					= _id,								\		
 	}
 
 /*--------  array for our GPIO banks  --------*/
-static struct nct5104d_gpio_bank nct5104d_gpio_bank[] = {
+static struct nct5104d_gpio_bank_t nct5104d_gpio_bank[] = {
 	NCT5104D_GPIO_BANK(0, 8, 0xE0),
 	NCT5104D_GPIO_BANK(1, 8, 0xE4)
 };
@@ -76,8 +74,7 @@ static struct platform_device device_pdevice_nct5104d = {
 
 
 /*--------  CORE communication functions  --------*/
-static int nct5104d_readw(int reg)
-{
+static int nct5104d_readw(int reg){
 	int val;
 
 	outb(reg++, NCT5104D_DEVICE_ADDR);
@@ -88,20 +85,17 @@ static int nct5104d_readw(int reg)
 	return val;
 }
 
-static inline int nct5104d_readb(int reg)
-{
+static inline int nct5104d_readb(int reg){
 	outb(reg, NCT5104D_DEVICE_ADDR);
 	return inb(NCT5104D_DEVICE_ADDR + 1);
 }
 
-static inline void nct5104d_writeb(int reg, unsigned val)
-{
+static inline void nct5104d_writeb(int reg, unsigned val){
 	outb(reg, NCT5104D_DEVICE_ADDR);
 	outb(val, NCT5104D_DEVICE_ADDR + 1);
 }
 
-static inline int nct5104d_efm_enable(void)
-{
+static inline int nct5104d_efm_enable(void){
 	if (!request_muxed_region(NCT5104D_DEVICE_ADDR, 2, DRIVER_NAME)) {
 		pr_err(DRIVER_NAME "I/O address 0x%04x already in use\n", NCT5104D_DEVICE_ADDR);
 		return -EBUSY;
@@ -113,14 +107,12 @@ static inline int nct5104d_efm_enable(void)
 	return 0;
 }
 
-static inline void nct5104d_efm_disable(void)
-{
+static inline void nct5104d_efm_disable(void){
 	outb(NCT5104D_EFM_DISABLE, NCT5104D_DEVICE_ADDR);
 	release_region(NCT5104D_DEVICE_ADDR, 2);
 }
 
-static inline void nct5104d_select_logical_device(int ld)
-{
+static inline void nct5104d_select_logical_device(int ld){
 	nct5104d_writeb(NCT5104D_REG_LDEVICE, ld);
 }
 
@@ -137,7 +129,7 @@ static inline void nct5104d_soft_reset(void)
 
 /*--------  GPIO management  --------*/
 
-static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl){
+static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank ){
 	// u8 val;
 
 	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
@@ -155,7 +147,12 @@ static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl){
 	// }
 }
 
-static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl){
+static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
+	
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG]  Hurrrrrraaaaa    => IOCTL_GET_REG ");
+				// &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_dir(&q_gpio); 
+			// &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_pin(&q_gpio); 
+
 	// u8 val;
 
 	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
@@ -195,7 +192,7 @@ static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl){
 	// }
 }
 
-static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl){
+static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
 	// u8 val;
 
 	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
@@ -311,10 +308,9 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             }
 
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_PIN ");
-
-			&nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_dir(&q_gpio); 
-			&nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_pin(&q_gpio); 
-
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] calling function     => nct5104d_gpio_pin_set ");
+			nct5104d_gpio_pin_set(&q_gpio, &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] function done     => nct5104d_gpio_pin_set ");
 
             break;			
         default:
@@ -359,13 +355,11 @@ static int nct5104d_cdev_register(void)
 
 
 /*--------  Platform data/platform and driver  --------*/
-static void nct5104d_device_release(struct device *dev)
-{
+static void nct5104d_device_release(struct device *dev){
 
 }
 
-static int nct5104d_drv_probe(struct platform_device *pdev)
-{
+static int nct5104d_drv_probe(struct platform_device *pdev){
 	static int err;
 	u16 devid;
 	u8 gpio_en;
@@ -418,38 +412,17 @@ static int nct5104d_drv_probe(struct platform_device *pdev)
 	
 }
 
-static int nct5104d_drv_remove(struct platform_device *pdev)
-{
+static int nct5104d_drv_remove(struct platform_device *pdev){
 	return 0;
 }
 
 /*--------  initialization  & release --------*/
-void __init nct5104d_init_platform_data(void)
-{
+void __init nct5104d_init_platform_data(void){
     /* Register "nct5104d platform device" with the OS. */
 	platform_device_register(&device_pdevice_nct5104d);
-
-
-	//TODO - implement the following registration for platform device
-
-	// 	pdev = platform_device_alloc("mydev", id);
-	// if (pdev) {
-	// 	err = platform_device_add_resources(pdev, &resources,
-	// 					    ARRAY_SIZE(resources));
-	// 	if (err == 0)
-	// 		err = platform_device_add_data(pdev, &platform_data,
-	// 					       sizeof(platform_data));
-	// 	if (err == 0)
-	// 		err = platform_device_add(pdev);
-	// } else {
-	// 	err = -ENOMEM;
-	// }
-	// if (err)
-	// 	platform_device_put(pdev);
 }
 
-static int __init nct5104d_driver_init(void)
-{
+static int __init nct5104d_driver_init(void){
 	int res=0;
 	
 	printk(KERN_ALERT "nct5104d_gpio: Initialiazing device ... \n");
@@ -467,8 +440,7 @@ static int __init nct5104d_driver_init(void)
 }
 
 /*--------  exit cleanup  --------*/
-static void __exit nct5104d_driver_exit(void)
-{
+static void __exit nct5104d_driver_exit(void){
 	device_destroy(cl, MKDEV(majorNumber, 0));     // remove the device
 	class_unregister(cl);                          // unregister the device class
 	class_destroy(cl);                             // remove the device class
@@ -486,8 +458,6 @@ static void __exit nct5104d_driver_exit(void)
 
 module_init(nct5104d_driver_init);
 module_exit(nct5104d_driver_exit);
-
-
 
 MODULE_AUTHOR("RafPe");
 MODULE_LICENSE("GPL");
