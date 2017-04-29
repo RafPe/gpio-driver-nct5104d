@@ -9,16 +9,12 @@
 #include <linux/fs.h>             // Header for the Linux file system support
 #include <asm/uaccess.h>          // Required for the copy to user function
 #include <linux/delay.h>
-#include <linux/mutex.h>	         /// Required for the mutex functionality
+#include <linux/mutex.h>	      // Required for the mutex functionality
 
 
 #include "nct5104d_gpio.h"
 
 static DEFINE_MUTEX(nct5104d_mutex);
-
-
-#define FIRST_MINOR 0
-#define MINOR_CNT 1
 
 static int 		gpio_access_addr = NCT5104D_DGA_GSR ;
 static int    	majorNumber;                  
@@ -26,9 +22,24 @@ static int    	majorNumber;
 static dev_t dev;
 static struct class *cl;
 
+// module_param(gpio_access_addr, int, 0644);
+// MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
 
-module_param(gpio_access_addr, int, 0644);
-MODULE_PARM_DESC(gpio_access_addr, "GPIO direct access address");
+#define NCT5104D_GPIO_BANK(_id, _ngpio, _regbase)					\
+	{																\
+		.set_dir  				= nct5104d_gpio_dir_set,			\
+		.get_pin              	= nct5104d_gpio_pin_get,			\
+		.set_pin              	= nct5104d_gpio_pin_set,			\	
+		.num_gpio				= _ngpio,							\
+		.regbase 				= _regbase,							\
+		.id 					= _id,								\		
+	}
+
+/*--------  array for our GPIO banks  --------*/
+static struct nct5104d_gpio_bank nct5104d_gpio_bank[] = {
+	NCT5104D_GPIO_BANK(0, 8, 0xE0),
+	NCT5104D_GPIO_BANK(1, 8, 0xE4)
+};
 
 
 static struct platform_driver nct5104d_pldriver = {
@@ -40,22 +51,19 @@ static struct platform_driver nct5104d_pldriver = {
     },
 };
 
-static struct file_operations nct5104d_driver_fops = 
-{
+static struct file_operations nct5104d_driver_fops = {
     .owner = THIS_MODULE,
     .open = nct5104d_cdev_open,
     .release = nct5104d_cdev_close,
     .unlocked_ioctl = nct5104d_ioctl,
 };
 
-static struct platform_data_nct5104d device_pdata_nct5104d = 
-{
+static struct platform_data_nct5104d device_pdata_nct5104d = {
  .chip_addr = NCT5104D_DEVICE_ADDR ,
  .num_gpio  = 16 ,
 };
 
-static struct platform_device device_pdevice_nct5104d = 
-{
+static struct platform_device device_pdevice_nct5104d = {
         .name           = DRIVER_NAME,
         .id             = 0,
         // .num_resources  = ARRAY_SIZE(sample_resources),
@@ -126,112 +134,109 @@ static inline void nct5104d_soft_reset(void)
 	nct5104d_writeb(NCT5104D_REG_SOFT_RESET, 1);
 }
 
-static void nct5104d_gpio_get_pin(unsigned pin)
-{
-	u8 val;
 
-	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+/*--------  GPIO management  --------*/
 
-	/*--------  GPIO1 register[8:15]  --------*/
-	if(pin > 7)
-	{
-		return nct5104d_readb(NCT5104D_REG_GPIO1_DATA);
-	}
+static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl){
+	// u8 val;
 
-	/*--------  GPIO0 register[0:7]  --------*/
-	if(pin < 8)
-	{
-		return nct5104d_readb(NCT5104D_REG_GPIO0_DATA);
-	}
+	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+
+	// /*--------  GPIO1 register[8:15]  --------*/
+	// if(pin > 7)
+	// {
+	// 	return nct5104d_readb(NCT5104D_REG_GPIO1_DATA);
+	// }
+
+	// /*--------  GPIO0 register[0:7]  --------*/
+	// if(pin < 8)
+	// {
+	// 	return nct5104d_readb(NCT5104D_REG_GPIO0_DATA);
+	// }
 }
 
-static void nct5104d_gpio_set_pin(unsigned pin,unsigned state)
-{
-	u8 val;
+static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl){
+	// u8 val;
 
-	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	/*--------  GPIO1 register[8:15]  --------*/
-	if(pin > 7)
-	{
-		val = nct5104d_readb(NCT5104D_REG_GPIO1_DATA);
+	// /*--------  GPIO1 register[8:15]  --------*/
+	// if(pin > 7)
+	// {
+	// 	val = nct5104d_readb(NCT5104D_REG_GPIO1_DATA);
 		
-		if (direction)
-		{
-			val |= (1 << pin);
-		}
-		else
-		{
-			val &= ~(1 << pin);
-		}
+	// 	if (direction)
+	// 	{
+	// 		val |= (1 << pin);
+	// 	}
+	// 	else
+	// 	{
+	// 		val &= ~(1 << pin);
+	// 	}
 
-		nct5104d_writeb(NCT5104D_REG_GPIO1_DATA,val); // ALL 0 == ALL OUT
-	}
+	// 	nct5104d_writeb(NCT5104D_REG_GPIO1_DATA,val); // ALL 0 == ALL OUT
+	// }
 
-	/*--------  GPIO0 register[0:7]  --------*/
-	if(pin < 8)
-	{
-		val = nct5104d_readb(NCT5104D_REG_GPIO0_DATA);
+	// /*--------  GPIO0 register[0:7]  --------*/
+	// if(pin < 8)
+	// {
+	// 	val = nct5104d_readb(NCT5104D_REG_GPIO0_DATA);
 
-		if (direction)
-		{
-			val |= (1 << pin);
-		}
-		else
-		{
-			val &= ~(1 << pin);
-		}
+	// 	if (direction)
+	// 	{
+	// 		val |= (1 << pin);
+	// 	}
+	// 	else
+	// 	{
+	// 		val &= ~(1 << pin);
+	// 	}
 
-		nct5104d_writeb(NCT5104D_REG_GPIO0_DATA,val); // ALL 0 == ALL OUT
-	}
+	// 	nct5104d_writeb(NCT5104D_REG_GPIO0_DATA,val); // ALL 0 == ALL OUT
+	// }
 }
 
-/**
- *	Sets GPIO direction 
- *  @pin: which pin should be set;
- *  @direction: 0 => OUT ; 1 => IN;
- */
-static void nct5104d_gpio_set_pin_direction(unsigned pin,unsigned direction)
-{
-	u8 val;
+static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl){
+	// u8 val;
 
-	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	/*--------  GPIO1 register[8:15]  --------*/
-	if(pin > 7)
-	{
-		val = nct5104d_readb(NCT5104D_REG_GPIO1_IO);
+	// /*--------  GPIO1 register[8:15]  --------*/
+	// if(pin > 7)
+	// {
+	// 	val = nct5104d_readb(NCT5104D_REG_GPIO1_IO);
 		
-		if (direction)
-		{
-			val |= (1 << pin);
-		}
-		else
-		{
-			val &= ~(1 << pin);
-		}
+	// 	if (direction)
+	// 	{
+	// 		val |= (1 << pin);
+	// 	}
+	// 	else
+	// 	{
+	// 		val &= ~(1 << pin);
+	// 	}
 
-		nct5104d_writeb(NCT5104D_REG_GPIO1_IO,val); // ALL 0 == ALL OUT
-	}
+	// 	nct5104d_writeb(NCT5104D_REG_GPIO1_IO,val); // ALL 0 == ALL OUT
+	// }
 
-	/*--------  GPIO0 register[0:7]  --------*/
-	if(pin < 8)
-	{
-		val = nct5104d_readb(NCT5104D_REG_GPIO0_IO);
+	// /*--------  GPIO0 register[0:7]  --------*/
+	// if(pin < 8)
+	// {
+	// 	val = nct5104d_readb(NCT5104D_REG_GPIO0_IO);
 
-		if (direction)
-		{
-			val |= (1 << pin);
-		}
-		else
-		{
-			val &= ~(1 << pin);
-		}
+	// 	if (direction)
+	// 	{
+	// 		val |= (1 << pin);
+	// 	}
+	// 	else
+	// 	{
+	// 		val &= ~(1 << pin);
+	// 	}
 
-		nct5104d_writeb(NCT5104D_REG_GPIO0_IO,val); // ALL 0 == ALL OUT
-	}
+	// 	nct5104d_writeb(NCT5104D_REG_GPIO0_IO,val); // ALL 0 == ALL OUT
+	// }
 
 }
+
+
 
 /*--------  Character device  --------*/
 static int nct5104d_cdev_open(struct inode *i, struct file *f)
@@ -300,10 +305,16 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 
             break;
         case IOCTL_SET_PIN:
+			if (copy_from_user(&q_gpio, (gpio_arg_t *)arg, sizeof(gpio_arg_t)))
+            {
+                return -EACCES;
+            }
 
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_PIN ");
 
-			nct5104d_gpio_set_pin(1,1);
+			&nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_dir(&q_gpio); 
+			&nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]->set_pin(&q_gpio); 
+
 
             break;			
         default:

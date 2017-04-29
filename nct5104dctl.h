@@ -1,8 +1,7 @@
-/*--------  ioctl  --------*/
- typedef struct
-{
-    int pin;
-    int direction;
+typedef struct {
+    unsigned pin;
+    unsigned direction;
+    unsigned state;
 } gpio_arg_t;
  
 typedef struct
