@@ -56,7 +56,7 @@
 #define MINOR_CNT   1
 
 #define NCT5104D_BANK(A) ({unsigned retval=0; if (A > 7 ) retval =1; retval;})
-
+#define NCT5104D_PIN(A)  ({unsigned retval=0; if (A > 7 ) retval = A-8; retval;})
 
 typedef struct {
     unsigned pin;
@@ -111,9 +111,9 @@ static inline int       nct5104d_get_logical_device(void);
 
 static inline void      nct5104d_soft_reset(void);
 
-static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
-static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
-static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
+static unsigned int nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
+static void         nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
+static void         nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
 
 static int nct5104d_cdev_register(void);
 static int nct5104d_cdev_open(struct inode *i, struct file *f);

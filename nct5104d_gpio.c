@@ -128,30 +128,22 @@ static inline void nct5104d_soft_reset(void){
 
 /*--------  GPIO management  --------*/
 
-static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
+static unsigned int nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
 	
-	// static int val;
+	static unsigned int val;
 
-	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
-	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
-	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
-	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
-	// printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] function   	      	=> %s\n",__FUNCTION__);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",&gpiobank->id);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",&gpiobank->regbase);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",&gpioctl->pin);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",&gpioctl->state);
 
-	// nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
+	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
-	// val = nct5104d_readb(&gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
-	
+	val = nct5104d_readb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
 
-	// return val;
-	// if (&gpioctl->direction)
-	// {
-	// 	val |= (1 << pin);
-	// }
-	// else
-	// {
-	// 	val &= ~(1 << pin);
-	// }
+
+	return !!(val & ( 1 << NCT5104D_PIN(gpioctl->pin) ) );
 }
 
 static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank){
@@ -167,16 +159,18 @@ static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
 	val = nct5104d_readb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id:val before	=> 0x%02x\n",val);
 	
-	if (&gpioctl->direction)
+	if (gpioctl->state)
 	{
-		val |= (1 << gpioctl->pin);
+		val |= (1 << NCT5104D_PIN(gpioctl->pin) );
 	}
 	else
 	{
-		val &= ~(1 << gpioctl->pin);
+		val &= ~(1 << NCT5104D_PIN(gpioctl->pin) );
 	}
 
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id:val written => 0x%02x\n",val);
 	nct5104d_writeb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_DATA,val);
 }
 
@@ -194,7 +188,7 @@ static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 
 	val = nct5104d_readb(gpiobank->regbase + NCT5104D_GPIO_OFFSET_IO);
 	
-	if (&gpioctl->direction)
+	if (gpioctl->direction)
 	{
 		val |= (1 << gpioctl->pin);
 	}
@@ -280,15 +274,34 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
                 return -EACCES;
             }
 
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_PIN ");
-			
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     		=> IOCTL_SET_PIN ");
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",q_gpio.pin);
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",q_gpio.state);
-			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id   		=> %d\n",NCT5104D_BANK(q_gpio.pin));
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id   			=> %d\n",NCT5104D_BANK(q_gpio.pin));
 
 			nct5104d_gpio_pin_set(&q_gpio, &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]);
 
-            break;			
+            break;		
+        case IOCTL_GET_PIN:
+			if (copy_from_user(&q_gpio, (gpio_arg_t *)arg, sizeof(gpio_arg_t)))
+            {
+                return -EACCES;
+            }
+
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     		=> IOCTL_GET_PIN ");			
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",q_gpio.pin);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id   		    => %d\n",NCT5104D_BANK(q_gpio.pin));
+
+			q_gpio.state = nct5104d_gpio_pin_get(&q_gpio, &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]);
+
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",q_gpio.state);
+
+            if (copy_to_user((gpio_arg_t *)arg, &q_gpio, sizeof(gpio_arg_t)))
+            {
+                return -EACCES;
+            }
+
+            break;					
         default:
             return -EINVAL;
     }
@@ -437,4 +450,4 @@ module_exit(nct5104d_driver_exit);
 MODULE_AUTHOR("RafPe");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Define param gor GPIO access");
-MODULE_VERSION("0.3");
+MODULE_VERSION("0.5");
