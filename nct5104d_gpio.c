@@ -16,7 +16,6 @@
 
 static DEFINE_MUTEX(nct5104d_mutex);
 
-static int 		gpio_access_addr 	= NCT5104D_DGA_GSR ;
 static int    	majorNumber;                
 
 static dev_t dev;
@@ -26,7 +25,7 @@ static struct class *cl;
 	{																\
 		.num_gpio				= _ngpio,							\
 		.regbase 				= _regbase,							\
-		.id 					= _id,								\		
+		.id 					= _id,								\
 	}
 
 /*--------  array for our GPIO banks  --------*/
@@ -380,8 +379,6 @@ static int nct5104d_drv_probe(struct platform_device *pdev){
 	u16 devid;
 	u8 gpio_en;
 
-	struct platform_data_nct5104d *pdata = dev_get_platdata(&pdev->dev);
-
 	err = nct5104d_efm_enable();
 	if (err)
 		return err;
@@ -423,7 +420,6 @@ static int nct5104d_drv_probe(struct platform_device *pdev){
 #ifdef DRIVER_DEBUG
 	printk(KERN_ALERT "nct5104d_gpio: platform data - chip addr        : 0x%02x\n",pdata->chip_addr);
 	printk(KERN_ALERT "nct5104d_gpio: platform data - num GPIO         : %d\n",pdata->num_gpio);
-	printk(KERN_ALERT "nct5104d_gpio: platform data - gpio access addr : 0x%02x\n",gpio_access_addr);
 #endif 
 
 	printk(KERN_ALERT "nct5104d_gpio: Succesfuly registered platform device\n");
