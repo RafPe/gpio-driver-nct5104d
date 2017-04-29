@@ -34,7 +34,7 @@ MODULE_PARM_DESC(debug_enabled, "Enable driver debug");
 	}
 
 /*--------  array for our GPIO banks  --------*/
-static struct nct5104d_gpio_bank_t nct5104d_gpio_bank[] = {
+static nct5104d_gpio_bank_t nct5104d_gpio_bank[] = {
 	NCT5104D_GPIO_BANK(0, 8, 0xE0),
 	NCT5104D_GPIO_BANK(1, 8, 0xE4)
 };
