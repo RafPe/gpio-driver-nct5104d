@@ -99,9 +99,9 @@ typedef struct {
     unsigned int num_gpio;
 } nct5104d_gpio_bank_t;
 
-static unsigned int         nct5104d_readw(int reg);
-static inline unsigned int  nct5104d_readb(int reg);
-static inline void          nct5104d_writeb(int reg, unsigned val);
+static unsigned int         nct5104d_readw(unsigned int  reg);
+static inline unsigned int  nct5104d_readb(unsigned int  reg);
+static inline void          nct5104d_writeb(unsigned int  reg, unsigned val);
 
 static inline int       nct5104d_efm_enable(void);
 static inline void      nct5104d_efm_disable(void);

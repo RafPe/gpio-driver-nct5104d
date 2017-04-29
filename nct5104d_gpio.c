@@ -75,7 +75,7 @@ static struct platform_device device_pdevice_nct5104d = {
 
 
 /*--------  CORE communication functions  --------*/
-static unsigned int nct5104d_readw(int reg){
+static unsigned int nct5104d_readw(unsigned int  reg){
 	unsigned int val;
 
 	outb(reg++, NCT5104D_DEVICE_ADDR);
@@ -86,12 +86,12 @@ static unsigned int nct5104d_readw(int reg){
 	return val;
 }
 
-static inline unsigned int nct5104d_readb(int reg){
+static inline unsigned int nct5104d_readb(unsigned int  reg){
 	outb(reg, NCT5104D_DEVICE_ADDR);
 	return inb(NCT5104D_DEVICE_ADDR + 1);
 }
 
-static inline void nct5104d_writeb(int reg, unsigned val){
+static inline void nct5104d_writeb(unsigned int  reg, unsigned val){
 	outb(reg, NCT5104D_DEVICE_ADDR);
 	outb(val, NCT5104D_DEVICE_ADDR + 1);
 }
