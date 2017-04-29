@@ -37,6 +37,7 @@ globalargs_t globalargs;
 
 void set_pin(int fd, globalargs_t * globargs);
 void get_pin(int fd, globalargs_t * globargs);
+void set_dir(int fd, globalargs_t * globargs);
 
 int convert_from_hex_string(char * strhex);
 void print_debug(globalargs_t * globargs);
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 {
     int fd;
     char *file_name = NCT5104D_FILE_DEVICE;
-
+    unsigned set_dir =0;
 
     
     /*--------  default init  --------*/    
@@ -65,6 +66,12 @@ int main(int argc, char *argv[])
 
     fd = open_file_dev(file_name);
 
+    if(set_dir   \
+    && (globalargs.pin >= 0)    \
+    && (globalargs.pin < 16))    
+    {
+        set_dir(fd, &globalargs);
+    }
 
     if(globalargs.action == e_pin_set   \
     && (globalargs.pin >= 0)    \
@@ -103,6 +110,25 @@ void print_usage()
 
 }
 
+void set_dir(int fd, globalargs_t * globargs)
+{
+    gpio_arg_t s;
+
+    s.pin       = globargs->pin;
+    s.direction = globargs->dir;
+    s.state     = globargs->value;
+
+    if (ioctl(fd, IOCTL_SET_DIR, &s) == -1)
+    {
+        perror("nct5104dctl ioctl set pin");
+    }
+    else
+    {
+        printf("[{ \"pin\":%d,\"dir\":%d}]\n", s.pin,s.direction);
+    }
+}
+
+
 void set_pin(int fd, globalargs_t * globargs)
 {
     gpio_arg_t s;
@@ -135,7 +161,7 @@ void get_pin(int fd, globalargs_t * globargs)
     }
     else
     {
-        printf("[{ \"pin\":%d,\"value\":%d}]\n", globargs->pin,globargs->value);
+        printf("[{ \"pin\":%d,\"value\":%d}]\n", s.pin,s.state);
     }
 }
 
@@ -177,6 +203,15 @@ void getoptions(int argc, char ** argv, globalargs_t * globargs)
         case 'p':
             globargs->pin = atoi(optarg);
             break;
+        case 'd':
+            set_dir = 1;
+            if( strcmp( "out", optarg ) == 0 ) {
+                globargs->dir = e_pin_out;
+            }
+            if( strcmp( "in", optarg ) == 0 ) {
+                globargs->dir = e_pin_in;
+            } 
+            break;            
         case '?':
             print_usage();
             break;

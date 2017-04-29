@@ -136,7 +136,6 @@ static unsigned int nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_ba
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",gpiobank->id);
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",gpiobank->regbase);
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",gpioctl->pin);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",gpioctl->state);
 
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
@@ -182,7 +181,7 @@ static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * g
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id	      	=> %d\n",gpiobank->id);
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:regbase   	=> 0x%02x\n",gpiobank->regbase);
 	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",gpioctl->pin);
-	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",gpioctl->state);
+	printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:direction   	=> %d\n",gpioctl->direction);
 
 	nct5104d_select_logical_device(NCT5104D_LDEVICE_GPIO);
 
@@ -300,6 +299,20 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             {
                 return -EACCES;
             }
+
+            break;			
+        case IOCTL_SET_DIR:
+			if (copy_from_user(&q_gpio, (gpio_arg_t *)arg, sizeof(gpio_arg_t)))
+            {
+                return -EACCES;
+            }
+
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     		=> IOCTL_SET_DIR ");
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",q_gpio.pin);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:direction   	=> %d\n",q_gpio.direction);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id   			=> %d\n",NCT5104D_BANK(q_gpio.pin));
+
+			nct5104d_gpio_dir_set(&q_gpio, &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]);
 
             break;					
         default:

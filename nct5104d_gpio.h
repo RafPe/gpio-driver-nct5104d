@@ -77,6 +77,8 @@ typedef struct
 #define IOCTL_GET_REG _IOR('q', 3, nct5104dctl_arg_t *)
 #define IOCTL_SET_REG _IOW('q', 4, nct5104dctl_arg_t *)
 
+#define IOCTL_SET_DIR _IOW('q', 5, gpio_arg_t *)
+
 typedef enum {
     GPIO_HIGH,
     GPIO_LOW
