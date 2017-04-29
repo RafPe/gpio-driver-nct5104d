@@ -236,6 +236,10 @@ static int nct5104d_cdev_register(void)
 
 
 /*--------  Platform data/platform and driver  --------*/
+static void nct5104d_device_release(struct device *dev)
+{
+	
+}
 
 static struct platform_data_nct5104d device_pdata_nct5104d = 
 {
@@ -251,7 +255,8 @@ static struct platform_device device_pdevice_nct5104d =
         // .num_resources  = ARRAY_SIZE(sample_resources),
         // .resource       = sample_resources,
 		.dev            = {
-			.platform_data	= &device_pdata_nct5104d
+			.platform_data	= &device_pdata_nct5104d,
+			.release 		= nct5104d_device_release,	
 		},
 };
 
@@ -371,17 +376,18 @@ static int __init nct5104d_driver_init(void)
 /*--------  exit cleanup  --------*/
 static void __exit nct5104d_driver_exit(void)
 {
-	printk(KERN_ALERT "nct5104d: unregistered platform device");
-
 	device_destroy(cl, MKDEV(majorNumber, 0));     // remove the device
 	class_unregister(cl);                          // unregister the device class
 	class_destroy(cl);                             // remove the device class
-	unregister_chrdev(majorNumber, DRIVER_NAME);             // unregister the major number
+	unregister_chrdev(majorNumber, DRIVER_NAME);   // unregister the major number
 
 	platform_driver_unregister(&nct5104d_pldriver);
 	platform_device_unregister(&device_pdevice_nct5104d);
 
-	mutex_destroy(&nct5104d_mutex);        /// destroy the dynamically-allocated mutex
+	mutex_destroy(&nct5104d_mutex);        			// destroy the dynamically-allocated mutex
+
+	printk(KERN_ALERT "nct5104d_gpio: Unregistered platform device");
+
     return;
 }
 
