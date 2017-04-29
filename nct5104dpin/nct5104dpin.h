@@ -1,3 +1,22 @@
+typedef enum {
+    e_pin_get,
+    e_pin_set,
+    e_dir_set,
+} e_pin_action_t;
+
+typedef enum {
+    e_pin_out,
+    e_pin_in,
+} e_pin_dir_t;
+
+typedef struct {
+    e_pin_action_t      action; 
+    int                 pin;
+    unsigned            value;
+    e_pin_dir_t         dir;
+
+} globalargs_t;
+
 typedef struct {
     unsigned pin;
     unsigned direction;

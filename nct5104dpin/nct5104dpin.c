@@ -14,24 +14,7 @@
 
 #define NCT5104D_FILE_DEVICE "/dev/nct5104d_gpio" 
 
-typedef enum {
-    e_pin_get,
-    e_pin_set,
-    e_dir_set,
-} e_pin_action_t;
 
-typedef enum {
-    e_pin_out,
-    e_pin_in,
-} e_pin_dir_t;
-
-typedef struct {
-    e_pin_action_t      action; 
-    int                 pin;
-    unsigned            value;
-    e_pin_dir_t         dir;
-
-} globalargs_t;
 
 globalargs_t globalargs;
 
@@ -51,8 +34,6 @@ int main(int argc, char *argv[])
 {
     int fd;
     char *file_name = NCT5104D_FILE_DEVICE;
-    unsigned set_dir =0;
-
     
     /*--------  default init  --------*/    
     globalargs.action   = e_pin_get;            // Default behaviour
@@ -66,7 +47,7 @@ int main(int argc, char *argv[])
 
     fd = open_file_dev(file_name);
 
-    if(set_dir   \
+    if(globalargs.action == e_dir_set   \
     && (globalargs.pin >= 0)    \
     && (globalargs.pin < 16))    
     {
@@ -204,7 +185,7 @@ void getoptions(int argc, char ** argv, globalargs_t * globargs)
             globargs->pin = atoi(optarg);
             break;
         case 'd':
-            set_dir = 1;
+            globargs->action = e_dir_set;
             if( strcmp( "out", optarg ) == 0 ) {
                 globargs->dir = e_pin_out;
             }

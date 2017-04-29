@@ -1,6 +1,7 @@
 #include <linux/ioctl.h>
 
 #define DRIVER_NAME "nct5104d_gpio"
+//#define DRIVER_DEBUG
 
 #define NCT5104D_DEVICE_ADDR            0x2E
 
