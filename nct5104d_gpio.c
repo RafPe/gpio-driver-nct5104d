@@ -281,6 +281,11 @@ static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
             }
 
 			printk(KERN_INFO "nct5104d_gpio: [DEBUG] received cmd     => IOCTL_SET_PIN ");
+			
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:pin	      	=> %d\n",q_gpio.pin);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpioctl:state   		=> %d\n",q_gpio.state);
+			printk(KERN_INFO "nct5104d_gpio: [DEBUG] gpiobank:id   		=> %d\n",NCT5104D_BANK(q_gpio.pin));
+
 			nct5104d_gpio_pin_set(&q_gpio, &nct5104d_gpio_bank[NCT5104D_BANK(q_gpio.pin)]);
 
             break;			
@@ -323,7 +328,6 @@ static int nct5104d_cdev_register(void)
 	return 0;
 
 }
-
 
 /*--------  Platform data/platform and driver  --------*/
 static void nct5104d_device_release(struct device *dev){

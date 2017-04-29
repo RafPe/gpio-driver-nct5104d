@@ -149,9 +149,9 @@ void set_pin(int fd, globalargs_t * globargs)
 {
     gpio_arg_t s;
 
-    s.pin = 1;
-    s.direction =1;
-    s.state = 1;
+    s.pin =       globargs->id;
+    s.direction = 0;
+    s.state     = globargs->value;
 
     if (ioctl(fd, IOCTL_SET_PIN, &s) == -1)
     {
