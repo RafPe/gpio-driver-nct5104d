@@ -99,27 +99,31 @@ typedef struct {
     unsigned int num_gpio;
 } nct5104d_gpio_bank_t;
 
-static int nct5104d_readw(int reg);
-static inline int nct5104d_readb(int reg);
-static inline void nct5104d_writeb(int reg, unsigned val);
-static inline int nct5104d_efm_enable(void);
-static inline void nct5104d_efm_disable(void);
-static inline void nct5104d_efm_disable(void);
-static inline void nct5104d_select_logical_device(int ld);
-static inline int nct5104d_get_logical_device(void);
-static inline void nct5104d_soft_reset(void);
+static unsigned int         nct5104d_readw(int reg);
+static inline unsigned int  nct5104d_readb(int reg);
+static inline void          nct5104d_writeb(int reg, unsigned val);
 
+static inline int       nct5104d_efm_enable(void);
+static inline void      nct5104d_efm_disable(void);
+
+static inline void      nct5104d_select_logical_device(int ld);
+static inline int       nct5104d_get_logical_device(void);
+
+static inline void      nct5104d_soft_reset(void);
 
 static void nct5104d_gpio_pin_get(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
 static void nct5104d_gpio_pin_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
 static void nct5104d_gpio_dir_set(gpio_arg_t * gpioctl, nct5104d_gpio_bank_t * gpiobank);
 
+static int nct5104d_cdev_register(void);
 static int nct5104d_cdev_open(struct inode *i, struct file *f);
 static int nct5104d_cdev_close(struct inode *i, struct file *f);
+
 static long nct5104d_ioctl(struct file *f, unsigned int cmd, unsigned long arg);
-static int nct5104d_cdev_register(void);
 static void nct5104d_device_release(struct device *dev);
+
 static int nct5104d_drv_probe(struct platform_device *pdev);
 static int nct5104d_drv_remove(struct platform_device *pdev);
+
 void __init nct5104d_init_platform_data(void);
 static void __exit nct5104d_driver_exit(void);
