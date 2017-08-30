@@ -401,6 +401,7 @@ static int nct5104d_drv_probe(struct platform_device *pdev){
 	static int err;
 	u16 devid;
 	u8 gpio_en;
+	struct platform_data_nct5104d *pdata = (struct platform_data_nct5104d *)pdev->dev.platform_data;
 
 	err = nct5104d_efm_enable();
 	if (err)
